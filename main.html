@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Main</title>
+</head>
+    <body>
+        <script src="three.js"></script>
+        <script src="GLTFLoader.js"></script>
+        <script src="OrbitControls.js"></script>
+
+        <script>
+            let scene, camera, renderer;
+
+            function init() {
+                
+                scene = new THREE.Scene();
+                scene.background = new THREE.Color(0xdddddd);
+                
+                camera = new THREE.PerspectiveCamera(80, window.innerWidth/window.innerHeight,0.1,1000);
+
+                hlight = new THREE.AmbientLight (0x404040, 100);
+                scene.add(hlight);
+
+                const renderer = new THREE.WebGLRenderer();
+                renderer.setSize(window.innerWidth,window.innerHeight);
+                document.body.appendChild(renderer.domElement);
+
+                let loader = new THREE.GLTFLoader();
+                loader.load('scene.gltf', function(gltf) {
+
+                    scene.add(gltf.scene);
+                    renderer.render(scene, camera);
+                });
+            }
+
+            init();
+        </script>
+    </body>
+</html>
