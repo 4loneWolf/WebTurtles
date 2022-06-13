@@ -8,8 +8,10 @@
         <script src="three.js"></script>
         <script src="GLTFLoader.js"></script>
         <script src="OrbitControls.js"></script>
+        <script type="module" src="datgui.js"></script>
 
-        <BUTTon>aboba</BUTTon>
+
+        <button id="input">aboba</button>
 
         <script>
             let scene, camera, renderer;
@@ -17,7 +19,7 @@
             function init() {
                 
                 scene = new THREE.Scene();
-                scene.background = new THREE.Color(0xfaf0e6);
+                scene.background = new THREE.Color(0x616164);
                 
                 camera = new THREE.PerspectiveCamera(80, window.innerWidth/window.innerHeight,0.1,1000);
                 camera.position.z = 5;
@@ -45,10 +47,12 @@
 
                 }
 
+                const gui = new GUI();
+
                 let loader = new THREE.GLTFLoader();
                 loader.load('turtle.gltf', function(gltf) {
                     turtle = gltf.scene.children[0];
-                    turtle.position.set(2,2,2)
+                    var input = document.getElementById( 'input' );
                     scene.add(gltf.scene);
                     animate()
                 })
