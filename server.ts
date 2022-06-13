@@ -24,6 +24,12 @@ app.use(bodyParser.json());
 wss.on('connection', (ws: WebSocket) => {
     ws.send('Connected');
 
+    
+
+    ws.on('message', (message: string) => {
+        console.log(message.toString('utf8'))
+    });
+    
     //connection is up, let's add a simple simple event
     //ws.on('message', (message: string) => {
 
@@ -39,6 +45,7 @@ wss.on('connection', (ws: WebSocket) => {
     app.get('/', function(req, res){
         res.sendFile("index.html"); 
     });
+
 
     app.post('/', function(req,res){
         var code = req.body.code;
