@@ -24,8 +24,6 @@ app.use(bodyParser.json());
 wss.on('connection', (ws: WebSocket) => {
     ws.send('Connected');
 
-    
-
     ws.on('message', (message: string) => {
         console.log(message.toString('utf8'))
     });
