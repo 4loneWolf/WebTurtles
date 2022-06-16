@@ -109,6 +109,14 @@ function init() {
             x = coords[0], z = coords[1];
             turtle.position.set(x, y, z);
             controls.target.set(x, y, z);
+        } else if (key == 'q') {
+            y = ++y
+            turtle.position.set(x, y, z);
+            controls.target.set(x, y, z);
+        } else if (key == 'z') {
+            y = --y
+            turtle.position.set(x, y, z);
+            controls.target.set(x, y, z);
         };
     });
 };
