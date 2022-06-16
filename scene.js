@@ -92,7 +92,7 @@ function init() {
     var WASD = document.getElementById("WASD");
     WASD.addEventListener('keydown', async function(event) {
         const key = event.key.toLowerCase();
-        console.log(key);
+
         if (key == 'w') {
             var coords = Movements.forward(direction, x, z);
             x = coords[0], z = coords[1];
