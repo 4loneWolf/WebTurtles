@@ -4,7 +4,7 @@
 1. ~fix SEND issues after client DS.~
 2. visuals for website (HTML/CSS) \ 3D + buttons {HALFWAY}
 3. make a client for turtle (Pastebin) + functions
-4. make a data base for storing the world around the turtles. 
+4. make a data base for storing the world around the turtles. (!!!!!elisey huesos v itoge delayu ya!!!!!)
 5. -=- BASICALLY BACKEND  (-_-) -=-
 
 Думаю, всем известен факт что война оказывается гигантское психологическое влияние на людей. -- Взрослые люди остаются на всю жизнь травмированы, не говоря о детях. -- Но не смотря на это дети с энтузиазмом проявляют желание помогать своей стране в тяжелое для неё время. Аркадий Гайдар поднимает проблему участия детей в Отечественной войне.
