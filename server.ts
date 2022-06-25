@@ -1,6 +1,5 @@
 import * as express from 'express';
 import * as http from 'http';
-import { disconnect } from 'process';
 import * as WebSocket from 'ws';
 
 const app = express();
@@ -40,18 +39,36 @@ wss.on('connection', (ws: WebSocket) => {
 
     app.use(express.static(__dirname));
  
-    app.get('/', function(req, res){
-        res.sendFile("index.html"); 
+    let code;
+    app.post('/pepe', function(req,res){
+        code = req.body.message;
+        ws.send(code)
+        console.log(code + " || OT SITE");
+        res.send()
     });
 
+    let messagee = {"message":"connected"};
 
-    app.post('/', function(req,res){
+    ws.on('message', function (message) {
+        //message = message.toString('utf8')
+        if (message != null) {
+        messagee = JSON.parse(message)
+        console.log(message + " || OT WEBSOCKET")
+        };
+    });
+
+    app.get('/pepe', function (req, res) {
+        res.send(messagee);
+    });
+
+    app.post('/', function (req, res) {
+        console.log(req.body.name)
         var code = req.body.code;
         console.log(code);
         wss.clients
-            .forEach(client => {
-                client.send(code)
-            })
+            .forEach(function (client) {
+            client.send(code);
+        });
     });
 }); 
 

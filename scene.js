@@ -2,9 +2,9 @@ import * as THREE from '/src/html/modules/three.module.js';
 import {GLTFLoader} from '/src/html/modules/GLTFLoader.js';
 import { OrbitControls } from '/src/html/modules/OrbitControls.js';
 import { GUI } from '/src/html/modules/dat.gui.module.js';
-import * as Movements from '/src/functions/functionsMovement.js';
+import * as functions from '/src/functions/functions.js';
 
-let scene, camera, hlight;
+let scene, camera, hlight, responsee;
 
 function init() {
     scene = new THREE.Scene();
@@ -18,28 +18,26 @@ function init() {
     hlight = new THREE.AmbientLight (0x404040, 6);
     scene.add(hlight);
 
-    const geometry = new THREE.BoxGeometry( 1, 1, 1 );
+    const geometry = new THREE.BoxGeometry  ( 1, 1, 1 );
     const material = new THREE.MeshBasicMaterial( {
         color: 0x00ff00,
         opacity: 0.3,
         transparent: true
     });
 
-    function addBlock(BlockName) {
-        BlockName = new THREE.Mesh( geometry, material );
-        scene.add(BlockName);
-        BlockName.position.set(x, y + 1, z);
+    function addBlock(Block) {
+        Block = new THREE.Mesh( geometry, material );
+        scene.add(Block);
+        Block.position.set(x, y + 1, z);
+        return Block
     };
-
-    const cube = new THREE.Mesh( geometry, material );
-    scene.add(cube);
 
     const renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth,window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
     const controls = new OrbitControls( camera, renderer.domElement );
-    camera.position.set( 0, 20, 100 );
+    camera.position.set( -10, 10, 10 );
     controls.update();
     function animate() {
         requestAnimationFrame( animate );
@@ -61,63 +59,140 @@ function init() {
     let direction = 'south';
 
     var button3 = { Right:function() {
-        direction = Movements.right(direction);
+        direction = functions.right(direction);
         turtle.rotateZ(THREE.MathUtils.degToRad(90));
+        sendData("right")
     }};
 
     var button2 = { Left:function() {
-        direction = Movements.left(direction);
+        direction = functions.left(direction);
         turtle.rotateZ(THREE.MathUtils.degToRad(-90));
+        sendData("left")
     }};
 
-    let Block = "aboba";
+    var button5 = { Up: async function() {
+            y = ++y
+            SetPos(turtle,x,y,z)
+            sendData("up")
+            sleep(10)
+            data = await receiveData()
+            console.log(data.message)
+    }}
 
-    var button1 = { Forward:function() { 
-        var coords = Movements.forward(direction, x, z);
-        x = coords[0], z = coords[1];
-        turtle.position.set(x, y, z);
+    let Block = 1, NewBlock, removable_items = [];
+
+    function SetPos(target, x, y, z) {
+        target.position.set(x, y, z);
         controls.target.set(x, y, z);
-        Block = Block + "k";
-        addBlock(Block);
-        console.log(Block);
+    }
+    let data;
+    var button1 = { Forward: async function() { 
+        var coords = functions.forward(direction, x, z);
+        x = coords[0], z = coords[1];
+        sendData("forward")
+        //console.log(scene.children[Block].position.z)
+        //data = receiveData()
+        sleep(10)
+        data = await receiveData()
+        console.log(data.message)
+        SetPos(turtle, x, y, z)
+        //NewBlock = addBlock(Block);
+        //removable_items.push(NewBlock)
+        //Block = Block + 1
+        //console.log(Block)
+    }};
+
+    var button4 = { clear:function() {
+        //scene.remove(NewBlock)
+        clean()
+        //console.log(Block)
+        //scene.remove()
     }};
 
     const gui = new GUI();
     const Movement = gui.addFolder('Movement');
     Movement.add(button1,'Forward');
     Movement.add(button2, 'Left');
-    Movement.add(button3, 'Right')
+    Movement.add(button3, 'Right');
+    Movement.add(button4, 'clear');
+    Movement.add(button5, 'Up');
     Movement.open();
 
+    function clean() {
+        if( removable_items.length > 0 ) {
+          removable_items.forEach(function(v,i) {
+             scene.remove(v);
+          });
+          removable_items = null;
+          removable_items = [];
+          Block = 1;
+          SetPos(turtle, 0, 0, 0)
+          x = 0, y = 0, z = 0
+        }
+  }
+
+    function sleep(milliseconds) {
+        const date = Date.now();
+        let currentDate = null;
+            do {
+            currentDate = Date.now();
+            } while (currentDate - date < milliseconds);
+        }
+
+    let TurtleNum = "1 ";
+
+    function sendData(data) {
+        let xhr = new XMLHttpRequest();
+
+        let json = JSON.stringify({
+           message: TurtleNum + data
+        });
+
+        xhr.open('POST', '/pepe', true)
+        xhr.setRequestHeader('Content-type', 'application/json; charset=utf-8');
+
+        xhr.send(json);
+        xhr.response;
+    };
+
+    async function receiveData() {
+        return fetch('/pepe')
+            .then((response)=>response.json())
+            .then((responseJson)=>{return responseJson});
+    }
+
     var WASD = document.getElementById("WASD");
-    WASD.addEventListener('keydown', async function(event) {
+    WASD.addEventListener('keydown', function(event) {
         const key = event.key.toLowerCase();
 
         if (key == 'w') {
-            var coords = Movements.forward(direction, x, z);
+            var coords = functions.forward(direction, x, z);
             x = coords[0], z = coords[1];
-            turtle.position.set(x, y, z);
-            controls.target.set(x, y, z);
+            SetPos(turtle,x,y,z)
+            sendData("forward")
         } else if (key == 'a') {
-            direction = Movements.left(direction);
+            direction = functions.left(direction);
             turtle.rotateZ(THREE.MathUtils.degToRad(-90));
+            sendData("left")
         } else if (key == 'd') {
-            direction = Movements.right(direction);
+            direction = functions.right(direction);
             turtle.rotateZ(THREE.MathUtils.degToRad(90));
+            sendData("right")
         } else if (key == 's') {
-            var coords = Movements.back(direction, x, z);
+            var coords = functions.back(direction, x, z);
             x = coords[0], z = coords[1];
-            turtle.position.set(x, y, z);
-            controls.target.set(x, y, z);
+            SetPos(turtle,x,y,z)
+            sendData("back")
         } else if (key == 'q') {
             y = ++y
-            turtle.position.set(x, y, z);
-            controls.target.set(x, y, z);
+            SetPos(turtle,x,y,z)
+            sendData("up")
         } else if (key == 'z') {
             y = --y
-            turtle.position.set(x, y, z);
-            controls.target.set(x, y, z);
+            SetPos(turtle,x,y,z)
+            sendData("down")
         };
+
     });
 };
 
