@@ -10,10 +10,19 @@ var server = http.createServer(app);
 var wss = new WebSocket.Server({ server: server });
 app.use(express.static(__dirname));
 var bodyParser = require('body-parser');
+const { table } = require("console");
 app.use(bodyParser.urlencoded({
     extended: false
 }));
 app.use(bodyParser.json());
+
+function sleep(milliseconds) {
+    const date = Date.now();
+    let currentDate = null;
+        do {
+        currentDate = Date.now();
+        } while (currentDate - date < milliseconds);
+    }
 
 wss.on('connection', function (ws) {
     ws.send('Connected');
@@ -26,20 +35,31 @@ wss.on('connection', function (ws) {
     app.use(express.static(__dirname));
     let code;
     app.post('/pepe', function(req,res){
-        code = req.body.message.message;
+        code = req.body.message;
         ws.send(code)
         console.log(code + " || OT SITE");
-        res.send(messagee)
+        ws.addEventListener('message', function abob(message) {
+        try {
+            messagee = JSON.parse(message.data)
+            res.send(messagee)    
+        } catch(err) {
+            console.log("error: " + err)
+        }
+            ws.removeEventListener('message', abob)
+        })
     });
 
-    let messagee = {"message":"connected"};
+    let messagee;
 
     ws.on('message', function (message) {
-        //message = message.toString('utf8')
-        if (message != null) {
-            messagee = JSON.parse(message)
-            console.log(message + " || OT WEBSOCKET")
-        };
+        message = message.toString('utf8')
+        try {
+        messagee = JSON.parse(message)
+        console.log(message + " || OT WEBSOCKET")    
+        return messagee;
+        } catch(err) {
+            console.log("error: " + err)
+        }
     });
 
     app.get('/pepe', function (req, res) {
@@ -55,6 +75,9 @@ wss.on('connection', function (ws) {
             client.send(code);
         });
     });
+    
+
+
 });
 
 server.listen(process.env.PORT || 34197, function () {

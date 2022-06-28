@@ -40,7 +40,15 @@ wss.on('connection', (ws: WebSocket) => {
         code = req.body.message;
         ws.send(code)
         console.log(code + " || OT SITE");
-        res.send()
+        ws.addEventListener('message', function abob(message) {
+        try {
+            messagee = JSON.parse(message.data)
+            res.send(messagee)    
+        } catch(err) {
+            console.log("error: " + err)
+        }
+            ws.removeEventListener('message', abob)
+        })
     });
 
     let messagee = {"message":"connected"};

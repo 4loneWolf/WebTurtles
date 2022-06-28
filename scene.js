@@ -114,13 +114,16 @@ function init() {
     }};
 
     const gui = new GUI();
+    const Gui = new GUI()
     const Movement = gui.addFolder('Movement');
-    Movement.add(button1,'Forward');
-    Movement.add(button2, 'Left');
-    Movement.add(button3, 'Right');
-    Movement.add(button4, 'clear');
-    Movement.add(button5, 'Up');
+        Movement.add(button1,'Forward');
+        Movement.add(button2, 'Left');
+        Movement.add(button3, 'Right');
+        Movement.add(button4, 'clear');
+        Movement.add(button5, 'Up');
     Movement.open();
+
+    const Turtles = Gui.addFolder('Turtles')
 
     function clean() {
         if( removable_items.length > 0 ) {
@@ -134,6 +137,14 @@ function init() {
           x = 0, y = 0, z = 0
         }
   }
+
+    window.addEventListener('resize', () => {
+        const { innerWidth, innerHeight } = window;
+
+        renderer.setSize(innerWidth, innerHeight);
+        camera.aspect = innerWidth / innerHeight;
+        camera.updateProjectionMatrix();
+    });
 
     function sleep(milliseconds) {
         const date = Date.now();
