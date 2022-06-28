@@ -23,10 +23,6 @@ app.use(bodyParser.json());
 wss.on('connection', (ws: WebSocket) => {
     ws.send('Connected');
 
-    ws.on('message', (message: string) => {
-        console.log(message.toString('utf8'))
-    });
-    
     //connection is up, let's add a simple simple event
     //ws.on('message', (message: string) => {
 
@@ -52,8 +48,8 @@ wss.on('connection', (ws: WebSocket) => {
     ws.on('message', function (message) {
         //message = message.toString('utf8')
         if (message != null) {
-        messagee = JSON.parse(message)
-        console.log(message + " || OT WEBSOCKET")
+            messagee = JSON.parse(message)
+            console.log(message + " || OT WEBSOCKET")
         };
     });
 

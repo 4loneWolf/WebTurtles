@@ -90,13 +90,16 @@ function init() {
     var button1 = { Forward: async function() { 
         var coords = functions.forward(direction, x, z);
         x = coords[0], z = coords[1];
+        
         data = await sendData("forward")
         //console.log(scene.children[Block].position.z)
-        //data = receiveData()
-        //sleep(10)
         //data = await receiveData()
-        console.log(data.message)
-        SetPos(turtle, x, y, z)
+        if (data != null) {
+            console.log(data.message)
+            SetPos(turtle, x, y, z)
+        } else {
+            console.log("message is empty")
+        }
         //NewBlock = addBlock(Block);
         //removable_items.push(NewBlock)
         //Block = Block + 1
@@ -157,9 +160,9 @@ function init() {
     };
 
     async function sendData(data) {
-        data = {message: data}
+        data = {message: TurtleNum + data}
         try {
-            return fetch('/pepe', {
+            return await fetch('/pepe', {
               method: 'POST',
               body: JSON.stringify(data),
               headers: {
@@ -172,29 +175,6 @@ function init() {
             console.error("Error: " + error)
         }
     };
-
-    async function receiveData() {
-        return fetch('/pepe')
-            .then(
-                function(response){
-                    if (response.status !== 200) {
-                        console.log("No connected WS clients. Status code: " + response.status);
-                        return;
-                    }
-                
-                    return response.json().then((responseJson) => {
-                        return responseJson;
-                    })
-
-            })
-    }
-
-    //async function receiveData() {
-        //return fetch('/pepe')
-            //.then((response)=> response.json())
-            //.then((responseJson)=>{return responseJson});
-    //}
-
 
     var WASD = document.getElementById("WASD");
     WASD.addEventListener('keydown', function(event) {
