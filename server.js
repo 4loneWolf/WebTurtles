@@ -14,29 +14,22 @@ app.use(bodyParser.urlencoded({
     extended: false
 }));
 app.use(bodyParser.json());
+
 wss.on('connection', function (ws) {
     ws.send('Connected');
-    //ws.on('message', function (message) {
-        //console.log(message.toString('utf8'));    
-        //app.get('/pepe', function (req, res) {
-            //res.send(message);
-        //});
-    //});
 
-    //connection is up, let's add a simple simple event
     //ws.on('message', (message: string) => {
-    //log the received message and send it back to the client
     //console.log('0', message);
     //ws.send(`Hello, you sent -> ${message}`);
     //});
-    //send immediatly a feedback to the incoming connection
+
     app.use(express.static(__dirname));
     let code;
     app.post('/pepe', function(req,res){
-        code = req.body.message;
+        code = req.body.message.message;
         ws.send(code)
         console.log(code + " || OT SITE");
-        res.send()
+        res.send(messagee)
     });
 
     let messagee = {"message":"connected"};
@@ -44,8 +37,8 @@ wss.on('connection', function (ws) {
     ws.on('message', function (message) {
         //message = message.toString('utf8')
         if (message != null) {
-        messagee = JSON.parse(message)
-        console.log(message + " || OT WEBSOCKET")
+            messagee = JSON.parse(message)
+            console.log(message + " || OT WEBSOCKET")
         };
     });
 
@@ -63,7 +56,7 @@ wss.on('connection', function (ws) {
         });
     });
 });
-//start our server
+
 server.listen(process.env.PORT || 34197, function () {
     console.log("Server started on port ".concat(server.address().port, " :)"));
 });

@@ -39,6 +39,7 @@ function init() {
     const controls = new OrbitControls( camera, renderer.domElement );
     camera.position.set( -10, 10, 10 );
     controls.update();
+    
     function animate() {
         requestAnimationFrame( animate );
         controls.update();
@@ -89,11 +90,11 @@ function init() {
     var button1 = { Forward: async function() { 
         var coords = functions.forward(direction, x, z);
         x = coords[0], z = coords[1];
-        sendData("forward")
+        data = await sendData("forward")
         //console.log(scene.children[Block].position.z)
         //data = receiveData()
-        sleep(10)
-        data = await receiveData()
+        //sleep(10)
+        //data = await receiveData()
         console.log(data.message)
         SetPos(turtle, x, y, z)
         //NewBlock = addBlock(Block);
@@ -141,7 +142,7 @@ function init() {
 
     let TurtleNum = "1 ";
 
-    function sendData(data) {
+    function sendDATA(data) {
         let xhr = new XMLHttpRequest();
 
         let json = JSON.stringify({
@@ -155,11 +156,45 @@ function init() {
         xhr.response;
     };
 
+    async function sendData(data) {
+        data = {message: data}
+        try {
+            return fetch('/pepe', {
+              method: 'POST',
+              body: JSON.stringify(data),
+              headers: {
+                'Content-Type': 'application/json'
+              }
+            })
+            .then((response)=>response.json())
+              .then((responseJson)=>{return responseJson})
+        } catch (error) {
+            console.error("Error: " + error)
+        }
+    };
+
     async function receiveData() {
         return fetch('/pepe')
-            .then((response)=>response.json())
-            .then((responseJson)=>{return responseJson});
+            .then(
+                function(response){
+                    if (response.status !== 200) {
+                        console.log("No connected WS clients. Status code: " + response.status);
+                        return;
+                    }
+                
+                    return response.json().then((responseJson) => {
+                        return responseJson;
+                    })
+
+            })
     }
+
+    //async function receiveData() {
+        //return fetch('/pepe')
+            //.then((response)=> response.json())
+            //.then((responseJson)=>{return responseJson});
+    //}
+
 
     var WASD = document.getElementById("WASD");
     WASD.addEventListener('keydown', function(event) {
