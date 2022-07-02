@@ -10,7 +10,10 @@ var server = http.createServer(app);
 var wss = new WebSocket.Server({ server: server });
 app.use(express.static(__dirname));
 var bodyParser = require('body-parser');
-const { table } = require("console");
+var url = require('node:url')
+const { writeFile } = require('node:fs');
+var fs = require('fs');
+const { deepStrictEqual } = require("assert");
 app.use(bodyParser.urlencoded({
     extended: false
 }));
@@ -24,9 +27,78 @@ function sleep(milliseconds) {
         } while (currentDate - date < milliseconds);
     }
 
-wss.on('connection', function (ws) {
-    ws.send('Connected');
+wss.on('connection', function (ws, req) {
 
+    const parameters = url.parse(req.url, true);
+    let name = parameters.query.myName, TurtleX = parameters.query.x, TurtleY = parameters.query.y, TurtleZ = parameters.query.z
+
+    function template(name, xx, yy, zz) {
+        let template = {
+            name: name,
+            TurtleCords: [{x: xx, y: yy, z: zz}],
+            Blocks: []
+        }
+        return template;
+    }
+
+    if (name != "NoName") {
+        console.log(name)
+        
+    } else {
+        let FirstData, NewName, broke;
+        fs.readFile('./src/database/GreekGodsAndMore.json', function(err, data) {
+            if (err) {
+                console.log(err)
+            } else {
+                data = data.toString('utf8')
+                FirstData = JSON.parse(data)
+            }
+
+            fs.readFile('./src/database/names.json', function(err, data) {
+                let broke = 0;
+                if (err) {
+                    console.log(err)
+                } else {
+                    data = data.toString('utf8')
+                    data = JSON.parse(data)
+                    if (data.data.length == 0) {
+                        NewName = FirstData[0]
+                        console.log(NewName)
+                    } else if (data.data.length == 1) {
+                        NewName = FirstData[1]
+                        console.log(NewName)
+                    } else {
+                        for (var i = 0; i < data.data.length; ++i) {
+                            for (var a = 1; a < FirstData.length; ++a) {
+                                if (FirstData[a] === data.data[i].name) {
+                                    break
+                                } else if (a == data.data.length) {
+                                    broke = true
+                                    NewName = FirstData[a]
+                                    console.log(NewName)
+                                    break
+                                }                       
+                            }
+                            if (broke == true) {
+                                break
+                            }
+                        }
+                    }
+                    let array = template(NewName, TurtleX, TurtleY, TurtleZ)
+                    data.data.push(array)
+                    data = JSON.stringify(data)
+                    writeFile("./src/database/names.json", data, (err) => {
+                        if (err) throw err;
+                    })
+                    ws.send(NewName)
+                }
+                });
+            });
+            fs.readFile('./src/database/names.json', function(err, data) {
+                data = data.toString('utf8')
+                data = JSON.parse(data)
+            })
+    };
     //ws.on('message', (message: string) => {
     //console.log('0', message);
     //ws.send(`Hello, you sent -> ${message}`);
@@ -34,19 +106,29 @@ wss.on('connection', function (ws) {
 
     app.use(express.static(__dirname));
     let code;
-    app.post('/pepe', function(req,res){
+    app.post('/pepe', function(req,res) {
         code = req.body.message;
-        ws.send(code)
-        console.log(code + " || OT SITE");
-        ws.addEventListener('message', function abob(message) {
-        try {
-            messagee = JSON.parse(message.data)
-            res.send(messagee)    
-        } catch(err) {
-            console.log("error: " + err)
-        }
-            ws.removeEventListener('message', abob)
+        let JSONcode = JSON.parse(code)
+        let codeToSend = JSONcode.dir
+        let toWho = JSONcode.who
+        wss.clients.forEach(function each(client) {
+            if (client.readyState === WebSocket.OPEN) {
+                console.log(client.readyState)
+                client.send(toWho + codeToSend)
+            }
+            client.once('message', function abob(message) {
+                try {
+                    message = message.toString('utf8')
+                    message = JSON.parse(message)
+                    res.send(message)    
+                } catch(err) {
+                    console.log("error: " + err)
+                }
+                    //let count = ws.listenerCount('message')
+                    //console.log(count)
+                })
         })
+        console.log(code + " || OT SITE");
     });
 
     let messagee;
@@ -54,9 +136,9 @@ wss.on('connection', function (ws) {
     ws.on('message', function (message) {
         message = message.toString('utf8')
         try {
-        messagee = JSON.parse(message)
-        console.log(message + " || OT WEBSOCKET")    
-        return messagee;
+            messagee = JSON.parse(message)
+            console.log(message + " || OT WEBSOCKET")    
+            return messagee;
         } catch(err) {
             console.log("error: " + err)
         }
@@ -75,9 +157,6 @@ wss.on('connection', function (ws) {
             client.send(code);
         });
     });
-    
-
-
 });
 
 server.listen(process.env.PORT || 34197, function () {
