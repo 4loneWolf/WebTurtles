@@ -1,8 +1,6 @@
 # WebTurtles
 
 # TODO
-1. ~fix SEND issues after client DS.~
-2. visuals for website (HTML/CSS) \ 3D + buttons {HALFWAY}
-3. make a client for turtle (Pastebin) + functions (Init done)
-4. make a data base for storing the world around the turtles. (80%)
-5. Ping - Pong
+1. Make visuals for website
+2. Try to make dynamic web links for connected turtles
+
