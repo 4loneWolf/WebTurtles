@@ -13,13 +13,14 @@ var bodyParser = require('body-parser');
 var url = require('node:url')
 const { writeFile } = require('node:fs');
 var fs = require('fs');
-const { deepStrictEqual } = require("assert");
+var jsonToLua = require("json_to_lua")
+const { format, parse } = require('lua-json')
 app.use(bodyParser.urlencoded({
     extended: false
 }));
 app.use(bodyParser.json());
 
-function sleep(milliseconds) {
+async function sleep(milliseconds) {
     const date = Date.now();
     let currentDate = null;
         do {
@@ -27,10 +28,21 @@ function sleep(milliseconds) {
         } while (currentDate - date < milliseconds);
     }
 
+    let CLIENTS = []
+    
 wss.on('connection', function (ws, req) {
 
     const parameters = url.parse(req.url, true);
-    let name = parameters.query.myName, TurtleX = parameters.query.x, TurtleY = parameters.query.y, TurtleZ = parameters.query.z
+    let BUSY, name = parameters.query.myName, TurtleX = +parameters.query.x, TurtleY = +parameters.query.y, TurtleZ = +parameters.query.z
+    
+    function AddClientToAnArray(names, wss, array) {
+        let template = {
+        name: names,
+        ws: wss
+        }
+        array.push(template)
+        return array;
+    };
 
     function template(name, xx, yy, zz) {
         let template = {
@@ -39,94 +51,129 @@ wss.on('connection', function (ws, req) {
             Blocks: []
         }
         return template;
+    };
+
+    function AddClient(name, ws, CLIENTS) {
+        let a = false;
+        if (CLIENTS.length == 0) {
+            CLIENTS = AddClientToAnArray(name, ws, CLIENTS)
+            return CLIENTS;
+        } else {
+            for (var i in CLIENTS) {
+                if (CLIENTS[i].name == name) {
+                    a = true
+                }
+            };
+        }
+        
+        if (a == false) {
+            console.log("i did it")
+            CLIENTS = AddClientToAnArray(name, ws, CLIENTS)
+            return CLIENTS;
+        };
+        return CLIENTS;
+    };
+
+    function idGenerator(){
+        return Date.now().toString(36) + Math.random().toString(36).substring(2);
     }
 
     if (name != "NoName") {
         console.log(name)
-        
+        CLIENTS = AddClient(name, ws, CLIENTS)
+        console.log(name)
     } else {
-        let FirstData, NewName, broke;
-        fs.readFile('./src/database/GreekGodsAndMore.json', function(err, data) {
-            if (err) {
-                console.log(err)
-            } else {
-                data = data.toString('utf8')
-                FirstData = JSON.parse(data)
-            }
+        let NewName;
 
-            fs.readFile('./src/database/names.json', function(err, data) {
+        let FirstData = fs.readFileSync('./src/database/GreekGodsAndMore.json', "utf8")
+            FirstData = JSON.parse(FirstData)
+
+            let data = fs.readFileSync('./src/database/names.json', "utf8")
                 let broke = 0;
-                if (err) {
-                    console.log(err)
-                } else {
-                    data = data.toString('utf8')
-                    data = JSON.parse(data)
-                    if (data.data.length == 0) {
-                        NewName = FirstData[0]
-                        console.log(NewName)
-                    } else if (data.data.length == 1) {
-                        NewName = FirstData[1]
-                        console.log(NewName)
-                    } else {
-                        for (var i = 0; i < data.data.length; ++i) {
-                            for (var a = 1; a < FirstData.length; ++a) {
-                                if (FirstData[a] === data.data[i].name) {
-                                    break
-                                } else if (a == data.data.length) {
-                                    broke = true
-                                    NewName = FirstData[a]
-                                    console.log(NewName)
-                                    break
-                                }                       
-                            }
-                            if (broke == true) {
-                                break
-                            }
-                        }
-                    }
-                    let array = template(NewName, TurtleX, TurtleY, TurtleZ)
-                    data.data.push(array)
-                    data = JSON.stringify(data)
-                    writeFile("./src/database/names.json", data, (err) => {
-                        if (err) throw err;
-                    })
-                    ws.send(NewName)
-                }
-                });
-            });
-            fs.readFile('./src/database/names.json', function(err, data) {
                 data = data.toString('utf8')
                 data = JSON.parse(data)
-            })
-    };
-    //ws.on('message', (message: string) => {
-    //console.log('0', message);
-    //ws.send(`Hello, you sent -> ${message}`);
-    //});
+                if (data.data.length == 0) {
+                    NewName = FirstData[0]
+                    console.log(NewName)
+                } else if (data.data.length == 1) {
+                    NewName = FirstData[1]
+                    console.log(NewName)
+                } else {
+                    for (var i = 0; i < data.data.length; ++i) {
+                        for (var a = 1; a < FirstData.length; ++a) {
+                            if (FirstData[a] === data.data[i].name) {
+                                break
+                            } else if (a == data.data.length) {
+                                broke = true
+                                NewName = FirstData[a]
+                                console.log(NewName)
+                                break
+                            }                       
+                        }
+                        if (broke == true) {
+                            break
+                        }
+                    }
+                }
+                let array = template(NewName, TurtleX, TurtleY, TurtleZ)
+                CLIENTS = AddClient(NewName, ws, CLIENTS)
+                data.data.push(array)
+                data = JSON.stringify(data)
+                writeFile("./src/database/names.json", data, (err) => {
+                    if (err) throw err;
+                })
+                ws.send(NewName)
+            }
 
     app.use(express.static(__dirname));
     let code;
-    app.post('/pepe', function(req,res) {
+    app.post('/pepe', async function kekw(req,res) {
+        if (BUSY == true) {
+            console.log("sleeping...")
+            await sleep(1);
+            console.log("finished")
+        }
+
         code = req.body.message;
         let JSONcode = JSON.parse(code)
-        let codeToSend = JSONcode.dir
+        let direction = JSONcode.dir
         let toWho = JSONcode.who
-        wss.clients.forEach(function each(client) {
+        let messageJSON;
+        wss.clients.forEach(async function each(client) {
             if (client.readyState === WebSocket.OPEN) {
-                console.log(client.readyState)
-                client.send(toWho + codeToSend)
+                BUSY = true
+                let ID = idGenerator()
+                let codeToSend = {direction, ID}
+                codeToSend = jsonToLua.jsonToLua(JSON.stringify(codeToSend))
+                client.send(codeToSend)
+                client.once('message', function (message) {
+                    try {
+                        messageJSON = parse("return " + message)
+                        if (messageJSON.ID == ID) {
+                            console.log(messageJSON)
+                            res.send(messageJSON)
+                            return messageJSON
+                        } else {
+                            res.send({boolean: false})
+                        }
+                    } catch(err) {
+                        console.log("error: " + err)
+                    }
+                    })
+
+                console.log(messageJSON + "  ||  RESPONSE")
+
+                //if (messageJSON.ID == ID) {
+                    //messageJSON = JSON.stringify(messageJSON)
+                    //res.send(messageJSON)
+                //}
+
+                //messagee = JSON.parse(messagee)
+                //wss.clients.forEach(function each(client) {
+                    //console.log(mesagToSend)
+                    //client.send(mesagToSend)
+                //})
             }
-            client.once('message', function abob(message) {
-                try {
-                    message = message.toString('utf8')
-                    message = JSON.parse(message)
-                    res.send(message)    
-                } catch(err) {
-                    console.log("error: " + err)
-                }
-                    //let count = ws.listenerCount('message')
-                    //console.log(count)
-                })
         })
         console.log(code + " || OT SITE");
     });
@@ -134,19 +181,37 @@ wss.on('connection', function (ws, req) {
     let messagee;
 
     ws.on('message', function (message) {
-        message = message.toString('utf8')
+        messagee = message.toString('utf8')
         try {
-            messagee = JSON.parse(message)
-            console.log(message + " || OT WEBSOCKET")    
-            return messagee;
+            //
+
+            //
+            console.log(message + " || OT WEBSOCKET")
+
         } catch(err) {
-            console.log("error: " + err)
+            console.log(message)
         }
     });
 
     app.get('/pepe', function (req, res) {
         res.send(messagee);
     });
+
+    app.post('/flood', function (req, res) {     
+        let a = req   
+    })
+
+    app.post('/utility', function (req, res) {
+        if (req.body.message == "gimme turtles") {
+            let names = []
+            for (i in CLIENTS) {
+                names.push(CLIENTS[i].name)
+            }
+            names = JSON.stringify(names)
+            console.log(names)
+            res.send(names)
+        }
+    })
 
     app.post('/', function (req, res) {
         console.log(req.body.name)
