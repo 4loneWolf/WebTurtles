@@ -22,10 +22,14 @@ if fs.exists("name") == true then
     name = file.readAll()
     os.setComputerLabel(name)
     file.close()
-    ws = http.websocket(link .. NameHeader .. name .. "&" .. "x=" .. x .. "&" .. "y=" .. y .. "&" .. "z=" .. z)
+    repeat
+        ws = http.websocket(link .. NameHeader .. name .. "&" .. "x=" .. x .. "&" .. "y=" .. y .. "&" .. "z=" .. z)
+    until ws ~= false    
 else 
     local file = fs.open("name", "w")
-    ws = http.websocket(link .. NameHeader .. name .. "&" .. "x=" .. x .. "&" .. "y=" .. y .. "&" .. "z=" .. z)
+    repeat
+        ws = http.websocket(link .. NameHeader .. name .. "&" .. "x=" .. x .. "&" .. "y=" .. y .. "&" .. "z=" .. z)
+    until ws ~= false 
     name = ws.receive(999999)
     file.writeLine(name)
     file.close()
@@ -95,8 +99,17 @@ function Movement(message)
     end
 end
 
+function receive(ws)
+    local message = ws.receive()
+    do return end
+end
+
+function send(ws, message)
+
+end
+
 while true do
-    message = ws.receive()
+    message = ws.receive(999999)
     local request = loadstring("return "..message.."")()
     message = request.direction
     print(message)
