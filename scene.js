@@ -5,8 +5,14 @@ import { GLTFLoader } from '/src/html/modules/GLTFLoader.js';
 import { OrbitControls } from '/src/html/modules/OrbitControls.js';
 import { GUI } from '/src/html/modules/dat.gui.module.js';
 import * as functions from '/src/functions/functions.js';
+let scene, camera, hlight, DataToSend, turtle, loader = new GLTFLoader(), Block = 1, NewBlock, removable_items = [], data;
 
-let scene, camera, hlight, DataToSend, turtle, loader = new GLTFLoader(), Block = 1, NewBlock, removable_items = [], data, TurtleName = false;
+var req = new XMLHttpRequest();
+req.open('GET', document.location, false);
+req.send(null);
+var header = req.responseURL
+header = header.substring(56)
+var TurtleName = header
 
 function init() {
     scene = new THREE.Scene();
@@ -104,7 +110,7 @@ function init() {
 
     var MovementButton5 = { Up: async function() {
         y = ++y
-        var data = await MakeArrayAndSend(x, y, z, "left")
+        var data = await MakeArrayAndSend(x, y, z, "up")
         if (data.boolean != false) {
             SetPos(turtle,x,y,z)
             AddInspectedBlocks(data,x,y,z)
@@ -113,7 +119,7 @@ function init() {
 
     var MovementButton6 = { Down: async function() {
         y = --y
-        var data = await MakeArrayAndSend(x, y, z, "left")
+        var data = await MakeArrayAndSend(x, y, z, "down")
         if (data.boolean != false) {
             SetPos(turtle,x,y,z)
             AddInspectedBlocks(data,x,y,z)
@@ -131,18 +137,17 @@ function init() {
         }
     }}
 
-    var RefreshTurtles = { RefreshTurtles: async function() {
-        let array;
-        let respond = await sendData("gimme turtles", '/utility')
-        for (var i in respond) {
-            let name = respond[i]
-            array = Names(name, i)
-            Turtles.add(array[i], name)
-        }
-    }}
+    //var RefreshTurtles = { RefreshTurtles: async function() {
+        //let array;
+        //let respond = await sendData("give me turtles", '/utility')
+        //for (var i in respond) {
+            //let name = respond[i]
+            //array = Names(name, i)
+            //Turtles.add(array[i], name)
+        //}
+    //}}
 
     const gui = new GUI();
-    const Gui = new GUI()
     const Movement = gui.addFolder('Movement');
         Movement.add(MovementButton1,'Forward');
         Movement.add(MovementButton2, 'Left');
@@ -153,16 +158,16 @@ function init() {
         Movement.add(MovementButton7, "Back")
     Movement.open();
 
-    const Turtles = Gui.addFolder('Turtles')
-        Turtles.add(RefreshTurtles, 'RefreshTurtles')
-    Turtles.open()
+    //const Turtles = Gui.addFolder('Turtles')
+        //Turtles.add(RefreshTurtles, 'RefreshTurtles')
+    //Turtles.open()
 
     async function MakeArrayAndSend(x, y, z, dir) {
         if (TurtleName != false) {
             DataToSend = MakeAnArray(dir, x, y, z, TurtleName)
             data = await sendData(DataToSend, '/pepe')
         } else {
-            alert("Refresh turtles and select one first!")
+            alert("Return to the turtles page and select one")
         }
         return data
     };
@@ -297,7 +302,9 @@ function init() {
         const key = event.key.toLowerCase();
 
         if (key == 'w') {
-            var data = await MakeArrayAndSend(x, y, z, "forward")
+            var coords = functions.forward(direction, x, z);
+                let xx = coords[0], zz = coords[1];
+            var data = await MakeArrayAndSend(xx, y, zz, "forward")
             if (data.boolean != false) {
                 var coords = functions.forward(direction, x, z);
                 x = coords[0], z = coords[1];
@@ -328,16 +335,18 @@ function init() {
                 AddInspectedBlocks(data,x,y,z)
                 }
         } else if (key == 'q') {
-            y = ++y
-            var data = await MakeArrayAndSend(x, y, z, "left")
+            let Tosendy = y + 1
+            var data = await MakeArrayAndSend(x, Tosendy, z, "up")
             if (data.boolean != false) {
+                y = ++y
                 SetPos(turtle,x,y,z)
                 AddInspectedBlocks(data,x,y,z)
             }
         } else if (key == 'z') {
-            y = --y
-            var data = await MakeArrayAndSend(x, y, z, "left")
+            let Tosendy = y - 1
+            var data = await MakeArrayAndSend(x, Tosendy, z, "down")
             if (data.boolean != false) {
+                y = --y
                 SetPos(turtle,x,y,z)
                 AddInspectedBlocks(data,x,y,z)
             }

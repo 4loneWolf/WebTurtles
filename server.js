@@ -32,9 +32,16 @@ async function sleep(milliseconds) {
     
 wss.on('connection', function (ws, req) {
 
+    ws.on('close', function () {
+        for (i in CLIENTS) {
+            if (CLIENTS[i].ws == ws) {
+                CLIENTS.splice(i, 1)
+            }
+        }
+    })
+
     const parameters = url.parse(req.url, true);
     let BUSY, name = parameters.query.myName, TurtleX = +parameters.query.x, TurtleY = +parameters.query.y, TurtleZ = +parameters.query.z
-    
     function AddClientToAnArray(names, wss, array) {
         let template = {
         name: names,
@@ -127,7 +134,7 @@ wss.on('connection', function (ws, req) {
 
     app.use(express.static(__dirname));
     let code;
-    app.post('/pepe', async function kekw(req,res) {
+    app.post('/pepe', async function (req,res) {
         if (BUSY == true) {
             console.log("sleeping...")
             await sleep(1);
@@ -176,22 +183,7 @@ wss.on('connection', function (ws, req) {
             }
         })
         console.log(code + " || OT SITE");
-    });
-
-    let messagee;
-
-    ws.on('message', function (message) {
-        messagee = message.toString('utf8')
-        try {
-            //
-
-            //
-            console.log(message + " || OT WEBSOCKET")
-
-        } catch(err) {
-            console.log(message)
-        }
-    });
+    }); // deleted function name kekw
 
     app.get('/pepe', function (req, res) {
         res.send(messagee);
@@ -202,7 +194,7 @@ wss.on('connection', function (ws, req) {
     })
 
     app.post('/utility', function (req, res) {
-        if (req.body.message == "gimme turtles") {
+        if (req.body.message == "give me turtles") {
             let names = []
             for (i in CLIENTS) {
                 names.push(CLIENTS[i].name)
@@ -212,16 +204,6 @@ wss.on('connection', function (ws, req) {
             res.send(names)
         }
     })
-
-    app.post('/', function (req, res) {
-        console.log(req.body.name)
-        var code = req.body.code;
-        console.log(code);
-        wss.clients
-            .forEach(function (client) {
-            client.send(code);
-        });
-    });
 });
 
 server.listen(process.env.PORT || 34197, function () {
