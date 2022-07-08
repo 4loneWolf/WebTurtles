@@ -3,15 +3,18 @@ local link = "ws://localhost:34197"
 local x = "none"
 local y = "none" 
 local z = "none"
+local direction = "none"
 
 if fs.exists("cords") == false then
-    io.write('Write turtles exact coordinates \n')
+    io.write('Write turtles exact coordinates (You can check in F3)\n')
     io.write('x: ')
     x = io.read("*l")
     io.write('y: ')
     y = io.read("*l")
     io.write('z: ')
     z = io.read("*l")
+    io.write('Write the direction turtle is facing (north, south, east, west) \n')
+    direction = io.read("*l")
     fs.open("cords", "w")
 end
 
@@ -23,12 +26,12 @@ if fs.exists("name") == true then
     os.setComputerLabel(name)
     file.close()
     repeat
-        ws = http.websocket(link .. NameHeader .. name .. "&" .. "x=" .. x .. "&" .. "y=" .. y .. "&" .. "z=" .. z)
+        ws = http.websocket(link .. NameHeader .. name .. "&" .. "x=" .. x .. "&" .. "y=" .. y .. "&" .. "z=" .. z .. "&" .. "direction=" .. direction)
     until ws ~= false    
 else 
     local file = fs.open("name", "w")
     repeat
-        ws = http.websocket(link .. NameHeader .. name .. "&" .. "x=" .. x .. "&" .. "y=" .. y .. "&" .. "z=" .. z)
+        ws = http.websocket(link .. NameHeader .. name .. "&" .. "x=" .. x .. "&" .. "y=" .. y .. "&" .. "z=" .. z .. "&" .. "direction=" .. direction)
     until ws ~= false 
     name = ws.receive(999999)
     file.writeLine(name)
@@ -72,10 +75,9 @@ function inspect(bool, ID)
 end
 
 function Movement(message)
-    local where = message.direction
+    local where = message.whereToGo
     local ID = message.ID
     local boolean
-
     if where == "forward" then
         boolean = turtle.forward()
     elseif where == "back" then
@@ -89,11 +91,11 @@ function Movement(message)
     elseif where == "down" then
         boolean = turtle.down()
     end
-
+    print(boolean)
     if boolean == true then
         local array = inspect("true", ID)
         do return array end
-    else 
+    else
         local array = inspect("false", ID)
         do return array end
     end
@@ -105,13 +107,12 @@ function receive(ws)
 end
 
 function send(ws, message)
-
 end
 
 while true do
     message = ws.receive(999999)
     local request = loadstring("return "..message.."")()
-    message = request.direction
+    message = request.whereToGo
     print(message)
     local array = Movement(request)
     print(array.up, array.middle, array.down, array.boolean, array.ID)
