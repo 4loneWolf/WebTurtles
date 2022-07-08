@@ -14,13 +14,15 @@ var header = req.responseURL
 header = header.substring(56)
 var TurtleName = header
 
-function init() {
+async function init() {
+    let datochka = await sendData({message: "turtle direction and pos", name: TurtleName}, '/utility')
+    let direction = datochka.message, x = datochka.x, y = datochka.y, z = datochka.z;
+
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0x616164);
     
-    camera = new THREE.PerspectiveCamera(80, window.innerWidth/window.innerHeight,0.1,1000);
-    camera.position.z = 5;
-    camera.position.y = 2;
+    camera = new THREE.PerspectiveCamera(90, window.innerWidth/window.innerHeight,0.01,999999);
+    camera.position.set(x + -3, y + 3, z + 3);
     camera.rotation.x = -0.3;
 
     hlight = new THREE.AmbientLight (0x404040, 6);
@@ -46,7 +48,6 @@ function init() {
     document.body.appendChild(renderer.domElement);
 
     const controls = new OrbitControls( camera, renderer.domElement );
-    camera.position.set( -10, 10, 10 );
     controls.update();
     
     function animate() {
@@ -57,18 +58,21 @@ function init() {
 
     loader.load('/turtle.gltf', function(gltf) {
         turtle = gltf.scene.children[0];
-        turtle.position.set(0, 0, 0);
-        controls.target.set(0, 0, 0);
+        turtle.position.set(x, y, z);
+        controls.target.set(x, y, z);
+        if (direction == "south") {
+            turtle.rotateZ(THREE.MathUtils.degToRad(180));
+        } else if (direction == "east") {
+            turtle.rotateZ(THREE.MathUtils.degToRad(90));
+        } else if (direction == "west") {
+            turtle.rotateZ(THREE.MathUtils.degToRad(-90));
+        }
         scene.add(gltf.scene);
         animate(turtle);
     });
 
-    let x = 0, y = 0, z = 0;
-    let direction = 'south';
-
     var MovementButton1 = { Forward: async function() { 
-        var data = await MakeArrayAndSend(x, y, z, "forward")
-        console.log(data)
+        var data = await MakeArrayAndSend(x, y, z, "forward", direction)
         if (data.boolean != false) {
             var coords = functions.forward(direction, x, z);
             x = coords[0], z = coords[1];
@@ -84,7 +88,8 @@ function init() {
     }};
 
     var MovementButton2 = { Left: async function() {
-        var data = await MakeArrayAndSend(x, y, z, "left")
+        let Tempdirection = functions.left(direction);
+        var data = await MakeArrayAndSend(x, y, z, "left", Tempdirection)
         if (data.boolean != false) {
             direction = functions.left(direction);
             turtle.rotateZ(THREE.MathUtils.degToRad(-90));
@@ -93,7 +98,8 @@ function init() {
     }};
 
     var MovementButton3 = { Right: async function() {
-        var data = await MakeArrayAndSend(x, y, z, "right")
+        let Tempdirection = functions.right(direction);
+        var data = await MakeArrayAndSend(x, y, z, "right", Tempdirection)
         if (data.boolean != false) {
             direction = functions.right(direction);
             turtle.rotateZ(THREE.MathUtils.degToRad(90));
@@ -127,7 +133,7 @@ function init() {
     }};
     
     var MovementButton7 = { Back: async function() {
-        var data = await MakeArrayAndSend(x, y, z, "back")
+        var data = await MakeArrayAndSend(x, y, z, "back", direction)
         console.log(data)
         if (data.boolean != false) {
             var coords = functions.back(direction, x, z);
@@ -162,9 +168,9 @@ function init() {
         //Turtles.add(RefreshTurtles, 'RefreshTurtles')
     //Turtles.open()
 
-    async function MakeArrayAndSend(x, y, z, dir) {
+    async function MakeArrayAndSend(x, y, z, dir, direction) {
         if (TurtleName != false) {
-            DataToSend = MakeAnArray(dir, x, y, z, TurtleName)
+            DataToSend = MakeAnArray(dir, x, y, z, TurtleName, direction)
             data = await sendData(DataToSend, '/pepe')
         } else {
             alert("Return to the turtles page and select one")
@@ -172,48 +178,19 @@ function init() {
         return data
     };
 
-    function Names(name, i) {
-        let array = []
-        if (name == "Zeus") {
-            array[i] = { Zeus: async function () {
-                TurtleName = "Zeus"
-            }}
-            return array;
-        } else if (name == "Hera") {
-            array[i] = { Hera: async function () {
-                TurtleName = "Hera"
-            }}
-        }
-    };
-
-    async function povorot(x, y, z, kyda) {
-        if (kyda == "left") {
-            direction = functions.left(direction);
-            DataToSend = MakeAnArray("left",x,y,z,TurtleName)
-            data = await sendData(DataToSend, '/pepe')
-            turtle.rotateZ(THREE.MathUtils.degToRad(-90));
-        } else if (kyda == "right"){
-            DataToSend = MakeAnArray("right",x,y,z,TurtleName)
-            data = await sendData(DataToSend, '/pepe')
-            direction = functions.right(direction);
-            turtle.rotateZ(THREE.MathUtils.degToRad(90));
-        }
-        AddInspectedBlocks(data)
-        return data.message
-    };
-
     function SetPos(target, x, y, z) {
         target.position.set(x, y, z);
         controls.target.set(x, y, z);
     };
 
-    function MakeAnArray(moveDir, x, y, z, toWho) {
+    function MakeAnArray(moveDir, x, y, z, toWho, dirr) {
         DataToSend = {
             x: x,
             y: y,
             z: z,
             dir: moveDir,
-            who: toWho
+            who: toWho,
+            direction: dirr
         }
         DataToSend = JSON.stringify(DataToSend)
         return DataToSend;
@@ -304,7 +281,7 @@ function init() {
         if (key == 'w') {
             var coords = functions.forward(direction, x, z);
                 let xx = coords[0], zz = coords[1];
-            var data = await MakeArrayAndSend(xx, y, zz, "forward")
+            var data = await MakeArrayAndSend(xx, y, zz, "forward", direction)
             if (data.boolean != false) {
                 var coords = functions.forward(direction, x, z);
                 x = coords[0], z = coords[1];
@@ -312,22 +289,25 @@ function init() {
                 AddInspectedBlocks(data,x,y,z)
             }
         } else if (key == 'a') {;
-            var data = await MakeArrayAndSend(x, y, z, "left")
+            let Tempdirection = functions.left(direction);
+            var data = await MakeArrayAndSend(x, y, z, "left", Tempdirection)
             if (data.boolean != false) {
                 direction = functions.left(direction);
                 turtle.rotateZ(THREE.MathUtils.degToRad(-90));
                 AddInspectedBlocks(data,x,y,z)
             }
         } else if (key == 'd') {;
-            var data = await MakeArrayAndSend(x, y, z, "right")
+            let Tempdirection = functions.left(direction);
+            var data = await MakeArrayAndSend(x, y, z, "right", Tempdirection)
             if (data.boolean != false) {
                 direction = functions.right(direction);
                 turtle.rotateZ(THREE.MathUtils.degToRad(90));
                 AddInspectedBlocks(data,x,y,z)
             }
         } else if (key == 's') {
-            var data = await MakeArrayAndSend(x, y, z, "back")
-            console.log(data)
+            var coords = functions.forward(direction, x, z);
+                let xx = coords[0], zz = coords[1];
+            var data = await MakeArrayAndSend(xx, y, zz, "back", direction)
             if (data.boolean != false) {
                 var coords = functions.back(direction, x, z);
                 x = coords[0], z = coords[1];
