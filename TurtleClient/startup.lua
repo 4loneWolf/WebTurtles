@@ -1,5 +1,5 @@
 local NameHeader = "?myName="
-local link = "ws://localhost:34197"
+local link = "wss://abobys.website:80"
 local x = "none"
 local y = "none" 
 local z = "none"
@@ -40,18 +40,19 @@ else
     print(name)
 end
 
-function TemplateForBlocks(upper, middlee, bottom, bool, IDD)
+function TemplateForBlocks(upper, middlee, bottom, bool, IDD, whereToGo)
     local array = {
         boolean = bool,
         up = upper,
         middle = middlee,
         down = bottom,
-        ID = IDD
+        ID = IDD,
+        whereToGo = whereToGo
     }
     do return array end
 end
 
-function inspect(bool, ID)
+function inspect(bool, ID, whereToGo)
     local a, upp  = turtle.inspectUp()
     if a == true then
         up = upp.name
@@ -70,7 +71,7 @@ function inspect(bool, ID)
     else
         bottom = "Noblock"
     end
-    array = TemplateForBlocks(up:gsub(":", ""), middle:gsub(":", ""), bottom:gsub(":", ""), bool, ID)
+    array = TemplateForBlocks(up:gsub(":", ""), middle:gsub(":", ""), bottom:gsub(":", ""), bool, ID, whereToGo)
     do return array end
 end
 
@@ -90,13 +91,17 @@ function Movement(message)
         boolean = turtle.up()
     elseif where == "down" then
         boolean = turtle.down()
+    elseif where == "dig" then
+        boolean = turtle.dig()
+    elseif where == "digUp" then
+        boolean = turtle.digUp()
     end
     print(boolean)
     if boolean == true then
-        local array = inspect("true", ID)
+        local array = inspect("true", ID, message.whereToGo)
         do return array end
     else
-        local array = inspect("false", ID)
+        local array = inspect("false", ID, message.whereToGo)
         do return array end
     end
 end
@@ -115,7 +120,6 @@ while true do
     message = request.whereToGo
     print(message)
     local array = Movement(request)
-    print(array.up, array.middle, array.down, array.boolean, array.ID)
     ws.send(array)
     print(array)
 end
