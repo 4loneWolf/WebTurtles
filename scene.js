@@ -11,7 +11,8 @@ var req = new XMLHttpRequest();
 req.open('GET', document.location, false);
 req.send(null);
 var header = req.responseURL
-header = header.substring(56)
+header = header.substring(41)
+console.log(header)
 var TurtleName = header
 
 async function init() {
@@ -29,11 +30,11 @@ async function init() {
     scene.add(hlight);
 
     const geometry = new THREE.BoxGeometry  ( 1, 1, 1 );
-    const material = new THREE.MeshBasicMaterial( {
-        color: 0x00ff00,
-        opacity: 0.3,
-        transparent: true
-    });
+    //const material = new THREE.MeshBasicMaterial( {
+        //color: 0x00ff00,
+        //opacity: 0.3,
+        //transparent: true
+    //});
 
     window.addEventListener('resize', () => {
         const { innerWidth, innerHeight } = window;
@@ -115,21 +116,23 @@ async function init() {
     }};
 
     var MovementButton5 = { Up: async function() {
-        y = ++y
-        var data = await MakeArrayAndSend(x, y, z, "up")
-        if (data.boolean != false) {
-            SetPos(turtle,x,y,z)
-            AddInspectedBlocks(data,x,y,z)
-        }
+        let Tosendy = y + 1
+            var data = await MakeArrayAndSend(x, Tosendy, z, "up")
+            if (data.boolean != false) {
+                y = ++y
+                SetPos(turtle,x,y,z)
+                AddInspectedBlocks(data,x,y,z)
+            }
     }};
 
     var MovementButton6 = { Down: async function() {
-        y = --y
-        var data = await MakeArrayAndSend(x, y, z, "down")
-        if (data.boolean != false) {
-            SetPos(turtle,x,y,z)
-            AddInspectedBlocks(data,x,y,z)
-        }
+        let Tosendy = y - 1
+            var data = await MakeArrayAndSend(x, Tosendy, z, "down")
+            if (data.boolean != false) {
+                y = --y
+                SetPos(turtle,x,y,z)
+                AddInspectedBlocks(data,x,y,z)
+            }
     }};
     
     var MovementButton7 = { Back: async function() {
@@ -196,8 +199,14 @@ async function init() {
         return DataToSend;
     };
 
-    function addBlock(Block, where, direction,x,y,z) {
-        Block = new THREE.Mesh( geometry, material );
+    function addBlock(Blockk, where, direction,x,y,z, color) {
+        console.log(color)
+        let material = new THREE.MeshBasicMaterial( {
+            color: parseInt(Number(color), 10),
+            opacity: 0.5,
+            transparent: true
+        });
+        let Block = new THREE.Mesh( geometry, material );
         scene.add(Block);
         if (where == "up") {
             Block.position.set(x, y + 1, z);
@@ -212,15 +221,29 @@ async function init() {
     };
 
     function AddInspectedBlocks(data,x,y,z) {
+        let colorUp = "Nocolor", colorMiddle = "Nocolor", colorDown = "Nocolor"
+        if (data.colorUp != undefined) {
+            colorUp = data.colorUp
+        }
+        if (data.colorMiddle != undefined) {
+            colorMiddle = data.colorMiddle
+        }
+        if (data.colorDown != undefined) {
+            colorDown = data.colorDown
+        }
+        console.log(colorUp, " ", colorMiddle, " ", colorDown)
         if (data != null) {
             if (data.up != "Noblock") {
-                addBlock(data.up, "up", direction,x,y,z)
+                console.log("UPPPPP")
+                addBlock(data.up, "up", direction,x,y,z, colorUp)
             }
             if (data.down != "Noblock") {
-                addBlock(data.down, "down", direction,x,y,z)
+                console.log("DOWNNNN")
+                addBlock(data.down, "down", direction,x,y,z, colorDown)
             }
             if (data.middle != "Noblock") {
-                addBlock(data.middle, "middle", direction,x,y,z)
+                console.log("MIDDDDLE")
+                addBlock(data.middle, "middle", direction,x,y,z, colorMiddle)
             }
             console.log(data.up, " | ", data.middle, " | ", data.down)     
         } else {

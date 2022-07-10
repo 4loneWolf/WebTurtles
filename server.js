@@ -1,20 +1,27 @@
 "use strict";
 exports.__esModule = true;
 var express = require("express");
-var http = require("http");
+var https = require("https");
 var WebSocket = require("ws");
+var fs = require('fs');
+var path = require('path')
 var app = express();
 //initialize a simple http server
-var server = http.createServer(app);
+const options = {
+    key: fs.readFileSync('./src/SSL/key.pem'),
+    cert: fs.readFileSync('./src/SSL/certificate.pem')
+}
+var server = https.createServer(options, app);
 //initialize the WebSocket server instance
 var wss = new WebSocket.Server({ server: server });
 var bodyParser = require('body-parser');
 var url = require('node:url')
-const { writeFile } = require('node:fs');
-var fs = require('fs');
+var favicon = require('serve-favicon')
+const { writeFile, writeFileSync } = require('node:fs');
 var jsonToLua = require("json_to_lua")
 const { format, parse } = require('lua-json')
 app.use(express.static(__dirname));
+app.use(favicon(path.join(__dirname, 'src', 'images', 'favicon.ico')))
 app.use(bodyParser.urlencoded({
     extended: false
 }));
@@ -51,7 +58,7 @@ wss.on('connection', function (ws, req) {
         return array;
     };
 
-    function forward(direction, newX, newZ) {
+    async function forward(direction, newX, newZ) {
         if (direction == 'north') {
             newZ = --newZ;
         }
@@ -70,7 +77,7 @@ wss.on('connection', function (ws, req) {
         return [newX, newZ];
     }
 
-    function back(direction, newX, newZ) {
+    async function back(direction, newX, newZ) {
         if (direction == 'north') {
             newZ = ++newZ
         } else if (direction == 'south') {
@@ -85,7 +92,7 @@ wss.on('connection', function (ws, req) {
         return [newX, newZ];
     }
 
-    function left(direction) {
+    async function left(direction) {
         var newDirection;
         if (direction == 'north') {
             newDirection = 'west';
@@ -105,7 +112,7 @@ wss.on('connection', function (ws, req) {
         return newDirection;
     }
 
-    function right(direction) {
+    async function right(direction) {
         var newDirection;
         if (direction == 'north') {
             newDirection = 'east';
@@ -157,6 +164,74 @@ wss.on('connection', function (ws, req) {
         }
         console.log(result)
         return result
+    }
+
+    function TemplateForUnknownBlock(block, color) {
+        let template = {
+            block: block,
+            color: color
+        }
+        return template;
+    }
+
+    async function getBlockColors(up, front, down){
+        fs.readFile('./src/database/BlockColors.json', async function(err, data) {
+            data = JSON.parse(data)
+            if (err) {
+                console.error(err)
+            }
+            var letters = "0123456789ABCDEF";
+            let UpColor = false, FrontColor = false, DownColor = false;
+            for (var i in data.blocks) {
+                if (data.blocks[i].block == up) {
+                    UpColor = data.blocks[i].color
+                }
+                if (data.blocks[i].block == front) {
+                    FrontColor = data.blocks[i].color 
+                }
+                if (data.blocks[i].block == down) {
+                    DownColor = data.blocks[i].color 
+                }
+            }
+            if (UpColor == false & up != "Noblock") {
+                let UpColor = '0x'
+                for (var i = 0; i < 6; i++) {
+                    UpColor += letters[(Math.floor(Math.random() * 16))];
+                }
+                let array = TemplateForUnknownBlock(up, UpColor)
+                data.blocks.push(array)
+            }
+            if (FrontColor == false & front != "Noblock") {
+                let FrontColor = '0x'
+                for (var i = 0; i < 6; i++) {
+                    FrontColor += letters[(Math.floor(Math.random() * 16))];
+                }
+                let array = TemplateForUnknownBlock(front, FrontColor)
+                data.blocks.push(array)
+            }
+            if (DownColor == false & down != "Noblock") {
+                let DownColor = '0x'
+                for (var i = 0; i < 6; i++) {
+                    DownColor += letters[(Math.floor(Math.random() * 16))];
+                }
+                let array = TemplateForUnknownBlock(down, DownColor)
+                data.blocks.push(array)
+            }
+            data = JSON.stringify(data)
+            writeFile('./src/database/BlockColors.json', data, (err) => {
+                if (err) throw err;
+            })
+            let arrayy = {
+                data: {
+                up: UpColor,
+                middle: FrontColor,
+                down: DownColor
+                }
+            }
+            console.log(arrayy + "  | || | || FIRST")
+            arrayy = JSON.stringify(arrayy)
+            writeFileSync('./src/database/temp/BlockColors.json', arrayy)
+        })
     }
 
     function template(name, xx, yy, zz, TurtleDir) {
@@ -249,7 +324,7 @@ wss.on('connection', function (ws, req) {
 
         code = req.body.message;
         let JSONcode = JSON.parse(code);
-            let ServerX = JSONcode.x, ServerY = JSONcode.y, ServerZ = JSONcode.z, whereToGo = JSONcode.dir, toWho = JSONcode.who, direction = JSONcode.direction;
+            let SiteX = JSONcode.x, SiteY = JSONcode.y, SiteZ = JSONcode.z, whereToGo = JSONcode.dir, toWho = JSONcode.who, direction = JSONcode.direction;
         let ws, TempName, messageJSON;
         console.log(direction)
         for (i in CLIENTS) {
@@ -266,14 +341,82 @@ wss.on('connection', function (ws, req) {
             let codeToSend = {whereToGo, ID};
             codeToSend = jsonToLua.jsonToLua(JSON.stringify(codeToSend));
             ws.send(codeToSend);
-            ws.once('message', function (message) {
+            ws.once('message', async function (message) {
                 try {
-                    messageJSON = parse("return " + message)
+                    let messageJSON = parse("return " + message)
                     if (messageJSON.ID == ID) {
-                        console.log(messageJSON)
-                        res.send(messageJSON)
+                        fs.readFile('./src/database/BlockColors.json', async function(err, data) {
+                            data = JSON.parse(data)
+                            if (err) {
+                                console.error(err)
+                            }
+                            var letters = "0123456789ABCDEF";
+                            let UpColor = false, FrontColor = false, DownColor = false;
+                            for (var i in data.blocks) {
+                                if (data.blocks[i].block == messageJSON.up) {
+                                    UpColor = data.blocks[i].color
+                                }
+                                if (data.blocks[i].block == messageJSON.middle) {
+                                    FrontColor = data.blocks[i].color 
+                                }
+                                if (data.blocks[i].block == messageJSON.down) {
+                                    DownColor = data.blocks[i].color 
+                                }
+                            }
+                            if (UpColor == false & messageJSON.up != "Noblock") {
+                                UpColor = '0x'
+                                for (var i = 0; i < 6; i++) {
+                                    UpColor += letters[(Math.floor(Math.random() * 16))];
+                                }
+                                let array = TemplateForUnknownBlock(messageJSON.up, UpColor)
+                                data.blocks.push(array)
+                            }
+                            if (FrontColor == false & messageJSON.middle != "Noblock") {
+                                FrontColor = '0x'
+                                for (var i = 0; i < 6; i++) {
+                                    FrontColor += letters[(Math.floor(Math.random() * 16))];
+                                }
+                                let array = TemplateForUnknownBlock(messageJSON.middle, FrontColor)
+                                console.log(array)
+                                data.blocks.push(array)
+                            }
+                            if (DownColor == false & messageJSON.down != "Noblock") {
+                                DownColor = '0x'
+                                for (var i = 0; i < 6; i++) {
+                                    DownColor += letters[(Math.floor(Math.random() * 16))];
+                                }
+                                let array = TemplateForUnknownBlock(messageJSON.down, DownColor)
+                                data.blocks.push(array)
+                            }
+
+                            let array = {
+                                data: {
+                                up: UpColor,
+                                middle: FrontColor,
+                                down: DownColor
+                                }
+                            }
+                            console.log(array, "  || CHECK THIS OUT")
+                            data = JSON.stringify(data)
+                            writeFile('./src/database/BlockColors.json', data, function(err) {
+                                if (err) throw err;
+                            })
+
+                            if (messageJSON.up != "Noblock") {
+                                messageJSON.colorUp = array.data.up
+                            }
+                            if (messageJSON.middle != "Noblock") {
+                                messageJSON.colorMiddle = array.data.middle
+                            }
+                            if (messageJSON.down != "Noblock") {
+                                messageJSON.colorDown = array.data.down
+                            }
+                            console.log(messageJSON)
+                            res.send(messageJSON)
+                        })
+
                         if (messageJSON.boolean == true) {
-                            fs.readFile('./src/database/names.json', (err, data) => {
+                            fs.readFile('./src/database/names.json', async function(err, data) {
                                 if (err) {
                                     console.log(err)
                                 } else {
@@ -283,24 +426,31 @@ wss.on('connection', function (ws, req) {
                                         if (data.data[i].name == toWho) {
                                             let x = data.data[i].TurtleCords.x, y = data.data[i].TurtleCords.y, z = data.data[i].TurtleCords.z, TurtleDirection = data.data[i].TurtleCords.direction
                                             if (whereToGo == "forward") {
-                                                let NewCords = forward(TurtleDirection, x, z)
-                                                x = NewCords[0], z = NewCords[1]
+                                                let NewCords = await forward(TurtleDirection, x, z)
+                                                let xx = NewCords[0], zz = NewCords[1]
+                                                data.data[i].TurtleCords.x = xx
+                                                data.data[i].TurtleCords.z = zz
                                             } else if (whereToGo == "back") {
-                                                let NewCords = back(TurtleDirection, x, z)
-                                                x = NewCords[0], z = NewCords[1]
+                                                let NewCords = await back(TurtleDirection, x, z)
+                                                let xx = NewCords[0], zz = NewCords[1]
+                                                data.data[i].TurtleCords.x = xx
+                                                data.data[i].TurtleCords.z = zz
                                             } else if (whereToGo == "up") {
-                                                y = ++y
+                                                let yy = ++y
+                                                data.data[i].TurtleCords.y = yy
                                             } else if (whereToGo == "down") {
-                                                y = --y                                  
+                                                let yy = --y
+                                                data.data[i].TurtleCords.y = yy                            
                                             } else if (whereToGo == "left") {
-                                                TurtleDirection = left(TurtleDirection)
+                                                let NewTurtleDirection = await left(TurtleDirection)
+                                                data.data[i].TurtleCords.direction = NewTurtleDirection
                                             } else if (whereToGo == "right") {
-                                                TurtleDirection = right(TurtleDirection)
+                                                let NewTurtleDirection = await right(TurtleDirection)
+                                                data.data[i].TurtleCords.direction = NewTurtleDirection
                                             }
-                                            data.data[i].TurtleCords.x = x
-                                            data.data[i].TurtleCords.z = z
-                                            data.data[i].TurtleCords.y = y
-                                            data.data[i].TurtleCords.direction = TurtleDirection
+                                            data.data[i].TurtleCords.SiteX = SiteX
+                                            data.data[i].TurtleCords.SiteY = SiteY
+                                            data.data[i].TurtleCords.SiteZ = SiteZ
                                             data = JSON.stringify(data)
                                             writeFile('./src/database/names.json', data, (err) => {
                                                 if (err) throw err;
@@ -309,12 +459,13 @@ wss.on('connection', function (ws, req) {
                                             break;
                                         }
                                         if (broke == true) {
+                                            broke = false
                                             break;
                                         }
                                     }
                                 };
 
-                                
+                            
 
                             });
                         };
@@ -385,6 +536,8 @@ wss.on('connection', function (ws, req) {
     });
 });
 
-server.listen(process.env.PORT || 34197, function () {
+
+server.listen(process.env.PORT || 80, function () {
     console.log("Server started on port ".concat(server.address().port, " :)"));
 });
+

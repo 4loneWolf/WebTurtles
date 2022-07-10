@@ -1,16 +1,16 @@
 "use strict";
 function forward(direction, newX, newZ) {
     if (direction == 'north') {
-        newZ = --newZ;
-    }
-    else if (direction == 'south') {
         newZ = ++newZ;
     }
+    else if (direction == 'south') {
+        newZ = --newZ;
+    }
     else if (direction == 'west') {
-        newX = --newX;
+        newX = ++newX;
     }
     else if (direction == 'east') {
-        newX = ++newX;
+        newX = --newX;
     }
     else {
         console.error('Not a direction');
@@ -19,13 +19,13 @@ function forward(direction, newX, newZ) {
 }
 function back(direction, newX, newZ) {
     if (direction == 'north') {
-        newZ = ++newZ
-    } else if (direction == 'south') {
         newZ = --newZ
+    } else if (direction == 'south') {
+        newZ = ++newZ
     } else if (direction == 'west') {
-        newX = ++newX
-    } else if (direction == 'east') {
         newX = --newX
+    } else if (direction == 'east') {
+        newX = ++newX
     } else {
         console.error('Not a direction');
     }
