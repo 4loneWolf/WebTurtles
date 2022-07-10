@@ -1,4 +1,5 @@
 "use strict";
+/* jshint node: true */
 exports.__esModule = true;
 var express = require("express");
 var https = require("https");
@@ -10,7 +11,7 @@ var app = express();
 const options = {
     key: fs.readFileSync('./src/SSL/key.pem'),
     cert: fs.readFileSync('./src/SSL/certificate.pem')
-}
+};
 var server = https.createServer(options, app);
 //initialize the WebSocket server instance
 var wss = new WebSocket.Server({ server: server });
@@ -33,7 +34,7 @@ async function sleep(milliseconds) {
         do {
         currentDate = Date.now();
         } while (currentDate - date < milliseconds);
-    };
+    }
 
     let CLIENTS = [];
     
@@ -56,7 +57,7 @@ wss.on('connection', function (ws, req) {
         }
         array.push(template)
         return array;
-    };
+    }
 
     async function forward(direction, newX, newZ) {
         if (direction == 'north') {
@@ -174,74 +175,14 @@ wss.on('connection', function (ws, req) {
         return template;
     }
 
-    async function getBlockColors(up, front, down){
-        fs.readFile('./src/database/BlockColors.json', async function(err, data) {
-            data = JSON.parse(data)
-            if (err) {
-                console.error(err)
-            }
-            var letters = "0123456789ABCDEF";
-            let UpColor = false, FrontColor = false, DownColor = false;
-            for (var i in data.blocks) {
-                if (data.blocks[i].block == up) {
-                    UpColor = data.blocks[i].color
-                }
-                if (data.blocks[i].block == front) {
-                    FrontColor = data.blocks[i].color 
-                }
-                if (data.blocks[i].block == down) {
-                    DownColor = data.blocks[i].color 
-                }
-            }
-            if (UpColor == false & up != "Noblock") {
-                let UpColor = '0x'
-                for (var i = 0; i < 6; i++) {
-                    UpColor += letters[(Math.floor(Math.random() * 16))];
-                }
-                let array = TemplateForUnknownBlock(up, UpColor)
-                data.blocks.push(array)
-            }
-            if (FrontColor == false & front != "Noblock") {
-                let FrontColor = '0x'
-                for (var i = 0; i < 6; i++) {
-                    FrontColor += letters[(Math.floor(Math.random() * 16))];
-                }
-                let array = TemplateForUnknownBlock(front, FrontColor)
-                data.blocks.push(array)
-            }
-            if (DownColor == false & down != "Noblock") {
-                let DownColor = '0x'
-                for (var i = 0; i < 6; i++) {
-                    DownColor += letters[(Math.floor(Math.random() * 16))];
-                }
-                let array = TemplateForUnknownBlock(down, DownColor)
-                data.blocks.push(array)
-            }
-            data = JSON.stringify(data)
-            writeFile('./src/database/BlockColors.json', data, (err) => {
-                if (err) throw err;
-            })
-            let arrayy = {
-                data: {
-                up: UpColor,
-                middle: FrontColor,
-                down: DownColor
-                }
-            }
-            console.log(arrayy + "  | || | || FIRST")
-            arrayy = JSON.stringify(arrayy)
-            writeFileSync('./src/database/temp/BlockColors.json', arrayy)
-        })
-    }
-
     function template(name, xx, yy, zz, TurtleDir) {
         let template = {
             name: name,
             TurtleCords: {x: xx, y: yy, z: zz, direction: TurtleDir},
-            Blocks: {},
+            Blocks: []
         }
         return template;
-    };
+    }
 
     function AddClient(name, ws, CLIENTS) {
         let a = false;
@@ -261,11 +202,11 @@ wss.on('connection', function (ws, req) {
             return CLIENTS;
         };
         return CLIENTS;
-    };
+    }
 
     function idGenerator(){
         return Date.now().toString(36) + Math.random().toString(36).substring(2);
-    };
+    }
 
     if (name != "NoName") {
         console.log(name)
@@ -311,32 +252,25 @@ wss.on('connection', function (ws, req) {
                     if (err) throw err;
                 })
                 ws.send(NewName)
-            }
+        }
 
-    app.use(express.static(__dirname));
     let code;
     app.post('/pepe', async function (req,res) {
-        if (BUSY == true) {
-            console.log("sleeping...")
-            await sleep(1);
-            console.log("finished")
-        };
-
+        res.set('Cache-control', 'public, max-age=300');
         code = req.body.message;
         let JSONcode = JSON.parse(code);
             let SiteX = JSONcode.x, SiteY = JSONcode.y, SiteZ = JSONcode.z, whereToGo = JSONcode.dir, toWho = JSONcode.who, direction = JSONcode.direction;
-        let ws, TempName, messageJSON;
-        console.log(direction)
+        let ws, TempName;
+        console.log(direction);
         for (i in CLIENTS) {
             if (toWho == CLIENTS[i].name) {
                 TempName = CLIENTS[i].name
                 ws = CLIENTS[i].ws
             };
-        };
+        }
         if (TempName != toWho) {
-            res.send({message: "Turtle is not connected"})
+            res.send({message: "Turtle is not connected"});
         } else {
-            BUSY = true
             let ID = idGenerator();
             let codeToSend = {whereToGo, ID};
             codeToSend = jsonToLua.jsonToLua(JSON.stringify(codeToSend));
@@ -377,7 +311,6 @@ wss.on('connection', function (ws, req) {
                                     FrontColor += letters[(Math.floor(Math.random() * 16))];
                                 }
                                 let array = TemplateForUnknownBlock(messageJSON.middle, FrontColor)
-                                console.log(array)
                                 data.blocks.push(array)
                             }
                             if (DownColor == false & messageJSON.down != "Noblock") {
@@ -388,7 +321,6 @@ wss.on('connection', function (ws, req) {
                                 let array = TemplateForUnknownBlock(messageJSON.down, DownColor)
                                 data.blocks.push(array)
                             }
-
                             let array = {
                                 data: {
                                 up: UpColor,
@@ -396,7 +328,7 @@ wss.on('connection', function (ws, req) {
                                 down: DownColor
                                 }
                             }
-                            console.log(array, "  || CHECK THIS OUT")
+                            messageJSON
                             data = JSON.stringify(data)
                             writeFile('./src/database/BlockColors.json', data, function(err) {
                                 if (err) throw err;
@@ -498,9 +430,10 @@ wss.on('connection', function (ws, req) {
             coords: {x, y, z}
         };
         return template;
-    };
+    }
 
     app.post('/utility', function (req, res) {
+        res.set('Cache-control', 'public, max-age=300')
         if (req.body.message.message == "give me turtles") {
             fs.readFile('./src/database/names.json', (err, data) => {
                 data = JSON.parse(data)
@@ -532,6 +465,8 @@ wss.on('connection', function (ws, req) {
                     }
                 }
             });
+        } else if (req.body.message.message == "turtle pos and blocks") {
+
         }
     });
 });

@@ -10,13 +10,13 @@ let scene, camera, hlight, DataToSend, turtle, loader = new GLTFLoader(), Block 
 var req = new XMLHttpRequest();
 req.open('GET', document.location, false);
 req.send(null);
-var header = req.responseURL
-header = header.substring(41)
-console.log(header)
-var TurtleName = header
+var header = req.responseURL;
+header = header.substring(41);
+console.log(header);
+var TurtleName = header;
 
 async function init() {
-    let datochka = await sendData({message: "turtle direction and pos", name: TurtleName}, '/utility')
+    let datochka = await sendData({message: "turtle direction and pos", name: TurtleName}, '/utility');
     let direction = datochka.message, x = datochka.x, y = datochka.y, z = datochka.z;
 
     scene = new THREE.Scene();
@@ -30,11 +30,6 @@ async function init() {
     scene.add(hlight);
 
     const geometry = new THREE.BoxGeometry  ( 1, 1, 1 );
-    //const material = new THREE.MeshBasicMaterial( {
-        //color: 0x00ff00,
-        //opacity: 0.3,
-        //transparent: true
-    //});
 
     window.addEventListener('resize', () => {
         const { innerWidth, innerHeight } = window;
@@ -55,7 +50,7 @@ async function init() {
         requestAnimationFrame( animate );
         controls.update();
         renderer.render( scene, camera );
-    };
+    }
 
     loader.load('/turtle.gltf', function(gltf) {
         turtle = gltf.scene.children[0];
@@ -73,12 +68,14 @@ async function init() {
     });
 
     var MovementButton1 = { Forward: async function() { 
-        var data = await MakeArrayAndSend(x, y, z, "forward", direction)
-        if (data.boolean != false) {
-            var coords = functions.forward(direction, x, z);
+        let coords = functions.forward(direction, x, z);
+                let xx = coords[0], zz = coords[1];
+        var data = await MakeArrayAndSend(xx, y, zz, "forward", direction);
+        if (data.boolean != false & data.whereToGo == "forward") {
+             coords = functions.forward(direction, x, z);
             x = coords[0], z = coords[1];
-            SetPos(turtle,x,y,z)
-            AddInspectedBlocks(data,x,y,z)
+            SetPos(turtle,x,y,z);
+            AddInspectedBlocks(data,x,y,z);
         }
         //console.log(scene.children[Block].position.z)
         //data = await receiveData()
@@ -90,61 +87,63 @@ async function init() {
 
     var MovementButton2 = { Left: async function() {
         let Tempdirection = functions.left(direction);
-        var data = await MakeArrayAndSend(x, y, z, "left", Tempdirection)
-        if (data.boolean != false) {
+        var data = await MakeArrayAndSend(x, y, z, "left", Tempdirection);
+        if (data.boolean != false & data.whereToGo == "left") {
             direction = functions.left(direction);
             turtle.rotateZ(THREE.MathUtils.degToRad(-90));
-            AddInspectedBlocks(data,x,y,z)
+            AddInspectedBlocks(data,x,y,z);
         }
     }};
 
     var MovementButton3 = { Right: async function() {
         let Tempdirection = functions.right(direction);
-        var data = await MakeArrayAndSend(x, y, z, "right", Tempdirection)
-        if (data.boolean != false) {
+        var data = await MakeArrayAndSend(x, y, z, "right", Tempdirection);
+        if (data.boolean != false & data.whereToGo == "right") {
             direction = functions.right(direction);
             turtle.rotateZ(THREE.MathUtils.degToRad(90));
-            AddInspectedBlocks(data,x,y,z)
+            AddInspectedBlocks(data,x,y,z);
         }
     }};
 
     var MovementButton4 = { clear:function() {
         //scene.remove(NewBlock)
-        clean()
+        clean();
         //console.log(Block)
         //scene.remove()
     }};
 
     var MovementButton5 = { Up: async function() {
-        let Tosendy = y + 1
-            var data = await MakeArrayAndSend(x, Tosendy, z, "up")
-            if (data.boolean != false) {
-                y = ++y
-                SetPos(turtle,x,y,z)
-                AddInspectedBlocks(data,x,y,z)
+        let Tosendy = y + 1;
+            var data = await MakeArrayAndSend(x, Tosendy, z, "up");
+            if (data.boolean != false & data.whereToGo == "up") {
+                y = ++y;
+                SetPos(turtle,x,y,z);
+                AddInspectedBlocks(data,x,y,z);
             }
     }};
 
     var MovementButton6 = { Down: async function() {
-        let Tosendy = y - 1
-            var data = await MakeArrayAndSend(x, Tosendy, z, "down")
-            if (data.boolean != false) {
-                y = --y
-                SetPos(turtle,x,y,z)
-                AddInspectedBlocks(data,x,y,z)
+        let Tosendy = y - 1;
+            var data = await MakeArrayAndSend(x, Tosendy, z, "down");
+            if (data.boolean != false & data.whereToGo == "down") {
+                y = --y;
+                SetPos(turtle,x,y,z);
+                AddInspectedBlocks(data,x,y,z);
             }
     }};
     
     var MovementButton7 = { Back: async function() {
-        var data = await MakeArrayAndSend(x, y, z, "back", direction)
-        console.log(data)
-        if (data.boolean != false) {
-            var coords = functions.back(direction, x, z);
+        var coords = functions.back(direction, x, z);
+                let xx = coords[0], zz = coords[1];
+        var data = await MakeArrayAndSend(xx, y, zz, "back", direction)
+        console.log(data);
+        if (data.boolean != false & data.whereToGo == "back") {
+            coords = functions.back(direction, x, z);
             x = coords[0], z = coords[1];
-            SetPos(turtle,x,y,z)
-            AddInspectedBlocks(data,x,y,z)
+            SetPos(turtle,x,y,z);
+            AddInspectedBlocks(data,x,y,z);
         }
-    }}
+    }};
 
     //var RefreshTurtles = { RefreshTurtles: async function() {
         //let array;
@@ -179,12 +178,12 @@ async function init() {
             alert("Return to the turtles page and select one")
         }
         return data
-    };
+    }
 
     function SetPos(target, x, y, z) {
         target.position.set(x, y, z);
         controls.target.set(x, y, z);
-    };
+    }
 
     function MakeAnArray(moveDir, x, y, z, toWho, dirr) {
         DataToSend = {
@@ -197,7 +196,7 @@ async function init() {
         }
         DataToSend = JSON.stringify(DataToSend)
         return DataToSend;
-    };
+    }
 
     function addBlock(Blockk, where, direction,x,y,z, color) {
         console.log(color)
@@ -218,7 +217,7 @@ async function init() {
             Block.position.set(x, y - 1, z);
         }
         return Block
-    };
+    }
 
     function AddInspectedBlocks(data,x,y,z) {
         let colorUp = "Nocolor", colorMiddle = "Nocolor", colorDown = "Nocolor"
@@ -262,7 +261,7 @@ async function init() {
           SetPos(turtle, 0, 0, 0)
           x = 0, y = 0, z = 0
         }
-    };
+    }
 
     function sleep(milliseconds) {
         const date = Date.now();
@@ -270,10 +269,10 @@ async function init() {
             do {
             currentDate = Date.now();
             } while (currentDate - date < milliseconds);
-    };
+    }
 
     async function sendData(data, where, options = {}) {
-        data = {message: data}
+        data = {message: data};
 
         const { timeout = 8000 } = options;
   
@@ -290,39 +289,40 @@ async function init() {
               signal: controller.signal
             })
             .then((response)=>response.json())
-              .then((responseJson)=>{clearTimeout(id); return responseJson});
+              .then((responseJson)=>{clearTimeout(id); console.log(responseJson); return responseJson;});
         } catch (error) {
             console.error("Error: " + error)
         }
         clearTimeout(id);
-    };
+    }
 
     var WASD = document.getElementById("WASD");
     WASD.addEventListener('keydown', async function(event) {
         const key = event.key.toLowerCase();
 
         if (key == 'w') {
-            var coords = functions.forward(direction, x, z);
+            let coords = functions.forward(direction, x, z);
                 let xx = coords[0], zz = coords[1];
             var data = await MakeArrayAndSend(xx, y, zz, "forward", direction)
-            if (data.boolean != false) {
-                var coords = functions.forward(direction, x, z);
+            console.log(data.whereToGo)
+            if (data.boolean != false & data.whereToGo == "forward") {
+                coords = functions.forward(direction, x, z);
                 x = coords[0], z = coords[1];
-                SetPos(turtle,x,y,z)
-                AddInspectedBlocks(data,x,y,z)
+                SetPos(turtle,x,y,z);
+                AddInspectedBlocks(data,x,y,z);
             }
-        } else if (key == 'a') {;
+        } else if (key == 'a') {
             let Tempdirection = functions.left(direction);
-            var data = await MakeArrayAndSend(x, y, z, "left", Tempdirection)
-            if (data.boolean != false) {
+            let data = await MakeArrayAndSend(x, y, z, "left", Tempdirection)
+            if (data.boolean != false & data.whereToGo == "left") {
                 direction = functions.left(direction);
                 turtle.rotateZ(THREE.MathUtils.degToRad(-90));
                 AddInspectedBlocks(data,x,y,z)
             }
-        } else if (key == 'd') {;
+        } else if (key == 'd') {
             let Tempdirection = functions.left(direction);
-            var data = await MakeArrayAndSend(x, y, z, "right", Tempdirection)
-            if (data.boolean != false) {
+            let data = await MakeArrayAndSend(x, y, z, "right", Tempdirection)
+            if (data.boolean != false & data.whereToGo == "right") {
                 direction = functions.right(direction);
                 turtle.rotateZ(THREE.MathUtils.degToRad(90));
                 AddInspectedBlocks(data,x,y,z)
@@ -331,7 +331,7 @@ async function init() {
             var coords = functions.forward(direction, x, z);
                 let xx = coords[0], zz = coords[1];
             var data = await MakeArrayAndSend(xx, y, zz, "back", direction)
-            if (data.boolean != false) {
+            if (data.boolean != false & data.whereToGo == "back") {
                 var coords = functions.back(direction, x, z);
                 x = coords[0], z = coords[1];
                 SetPos(turtle,x,y,z)
@@ -340,7 +340,7 @@ async function init() {
         } else if (key == 'q') {
             let Tosendy = y + 1
             var data = await MakeArrayAndSend(x, Tosendy, z, "up")
-            if (data.boolean != false) {
+            if (data.boolean != false & data.whereToGo == "up") {
                 y = ++y
                 SetPos(turtle,x,y,z)
                 AddInspectedBlocks(data,x,y,z)
@@ -348,7 +348,7 @@ async function init() {
         } else if (key == 'z') {
             let Tosendy = y - 1
             var data = await MakeArrayAndSend(x, Tosendy, z, "down")
-            if (data.boolean != false) {
+            if (data.boolean != false & data.whereToGo == "down") {
                 y = --y
                 SetPos(turtle,x,y,z)
                 AddInspectedBlocks(data,x,y,z)
