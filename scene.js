@@ -210,50 +210,45 @@ async function init() {
         DataToSend = JSON.stringify(DataToSend)
         return DataToSend;
     }
-
     function addBlock(Blockk, where, direction,x,y,z, color) {
         console.log(color)
         let material = new THREE.MeshBasicMaterial( {
             color: parseInt(Number(color), 10),
             opacity: 0.5,
             transparent: true
-        });
+        })
         let Block = new THREE.Mesh( geometry, material );
         scene.add(Block);
         if (where == "up") {
-            let broke = false
             for (var i in scene.children) {
                 if (scene.children[i].position.x == x & scene.children[i].position.y == y + 1 & scene.children[i].position.z == z) {
-                    broke = true
+                    scene.children[i].name = "delete"
+                    scene.remove("delete")
                     break;
                 }
             }
-            if (broke == false) {
-                Block.position.set(x, y + 1, z);
-            }
+            Block.position.set(x, y + 1, z);
+
         } else if (where == "middle") {
             var coords = functions.forward(direction, x, z)
-            let nx = coords[0], nz = coords[1], broke = false;
+            let nx = coords[0], nz = coords[1];
             for (var i in scene.children) {
                 if (scene.children[i].position.x == nx & scene.children[i].position.y == y & scene.children[i].position.z == nz) {
-                    broke = true
+                    scene.remove(scene.children[i])
                     break;
                 }
             }
-            if (broke == false) {
-                Block.position.set(nx, y, nz);
-            }
+            Block.position.set(nx, y, nz);
         } else {
-            let broke = false
+
             for (var i in scene.children) {
                 if (scene.children[i].position.x == x & scene.children[i].position.y == y - 1 & scene.children[i].position.z == z) {
-                    broke = true
+                    scene.remove(scene.children[i])
                     break;
                 }
             }
-            if (broke == false) {
-                Block.position.set(x, y - 1, z);
-            }
+            Block.position.set(x, y - 1, z);
+
         }
         return Block
     }
@@ -289,7 +284,7 @@ async function init() {
     function clean() {
         if( removable_items.length > 0 ) {
           removable_items.forEach(function(v,i) {
-             scene.remove(v);
+            scene.remove(scene.children[i])
           });
           removable_items = null;
           removable_items = [];
