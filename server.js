@@ -54,7 +54,7 @@ wss.on('connection', function (ws, req) {
         let template = {
         name: names,
         ws: wss
-        }
+        };
         array.push(template)
         return array;
     }

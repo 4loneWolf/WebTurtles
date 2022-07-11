@@ -1,6 +1,5 @@
 // RIP TECHNOBLADE NEVER FORGET o7
 
-import * as THREE from '/src/html/modules/three.module.js';
 import { GLTFLoader } from '/src/html/modules/GLTFLoader.js';
 import { OrbitControls } from '/src/html/modules/OrbitControls.js';
 import { GUI } from '/src/html/modules/dat.gui.module.js';
@@ -16,6 +15,7 @@ console.log(header);
 var TurtleName = header;
 
 async function init() {
+
     let datochka = await sendData({message: "turtle direction and pos", name: TurtleName}, '/utility');
     let direction = datochka.message, x = datochka.x, y = datochka.y, z = datochka.z;
 
@@ -30,7 +30,6 @@ async function init() {
     scene.add(hlight);
 
     const geometry = new THREE.BoxGeometry  ( 1, 1, 1 );
-
     window.addEventListener('resize', () => {
         const { innerWidth, innerHeight } = window;
 
@@ -67,14 +66,17 @@ async function init() {
         animate(turtle);
     });
 
-    var MovementButton1 = { Forward: async function() { 
+    var MovementButton1 = { Forward: async function() {
+        console.log(scene.children)
         let coords = functions.forward(direction, x, z);
                 let xx = coords[0], zz = coords[1];
         var data = await MakeArrayAndSend(xx, y, zz, "forward", direction);
         if (data.boolean != false & data.whereToGo == "forward") {
-             coords = functions.forward(direction, x, z);
+            coords = functions.forward(direction, x, z);
             x = coords[0], z = coords[1];
             SetPos(turtle,x,y,z);
+            AddInspectedBlocks(data,x,y,z);
+        } else if (data.boolean == false) {
             AddInspectedBlocks(data,x,y,z);
         }
         //console.log(scene.children[Block].position.z)
@@ -107,9 +109,13 @@ async function init() {
 
     var MovementButton4 = { clear:function() {
         //scene.remove(NewBlock)
-        clean();
+        //clean();
         //console.log(Block)
         //scene.remove()
+        for (var i in scene.children) {
+            console.log(scene.children[i].position.x, " ", scene.children[i].position.y, " || ", scene.children[i].position.z )
+            scene.children[i].position.x
+        }
     }};
 
     var MovementButton5 = { Up: async function() {
@@ -118,6 +124,8 @@ async function init() {
             if (data.boolean != false & data.whereToGo == "up") {
                 y = ++y;
                 SetPos(turtle,x,y,z);
+                AddInspectedBlocks(data,x,y,z);
+            } else if (data.boolean == false) {
                 AddInspectedBlocks(data,x,y,z);
             }
     }};
@@ -128,6 +136,8 @@ async function init() {
             if (data.boolean != false & data.whereToGo == "down") {
                 y = --y;
                 SetPos(turtle,x,y,z);
+                AddInspectedBlocks(data,x,y,z);
+            } else if (data.boolean == false) {
                 AddInspectedBlocks(data,x,y,z);
             }
     }};
@@ -141,6 +151,8 @@ async function init() {
             coords = functions.back(direction, x, z);
             x = coords[0], z = coords[1];
             SetPos(turtle,x,y,z);
+            AddInspectedBlocks(data,x,y,z);
+        } else if (data.boolean == false) {
             AddInspectedBlocks(data,x,y,z);
         }
     }};
@@ -164,6 +176,7 @@ async function init() {
         Movement.add(MovementButton5, 'Up');
         Movement.add(MovementButton6, "Down")
         Movement.add(MovementButton7, "Back")
+    Movement.position
     Movement.open();
 
     //const Turtles = Gui.addFolder('Turtles')
@@ -233,15 +246,12 @@ async function init() {
         console.log(colorUp, " ", colorMiddle, " ", colorDown)
         if (data != null) {
             if (data.up != "Noblock") {
-                console.log("UPPPPP")
                 addBlock(data.up, "up", direction,x,y,z, colorUp)
             }
             if (data.down != "Noblock") {
-                console.log("DOWNNNN")
                 addBlock(data.down, "down", direction,x,y,z, colorDown)
             }
             if (data.middle != "Noblock") {
-                console.log("MIDDDDLE")
                 addBlock(data.middle, "middle", direction,x,y,z, colorMiddle)
             }
             console.log(data.up, " | ", data.middle, " | ", data.down)     
@@ -310,6 +320,8 @@ async function init() {
                 x = coords[0], z = coords[1];
                 SetPos(turtle,x,y,z);
                 AddInspectedBlocks(data,x,y,z);
+            } else if (data.boolean == false) {
+                AddInspectedBlocks(data,x,y,z);
             }
         } else if (key == 'a') {
             let Tempdirection = functions.left(direction);
@@ -336,6 +348,8 @@ async function init() {
                 x = coords[0], z = coords[1];
                 SetPos(turtle,x,y,z)
                 AddInspectedBlocks(data,x,y,z)
+                } else if (data.boolean == false) {
+                    AddInspectedBlocks(data,x,y,z);
                 }
         } else if (key == 'q') {
             let Tosendy = y + 1
@@ -344,6 +358,8 @@ async function init() {
                 y = ++y
                 SetPos(turtle,x,y,z)
                 AddInspectedBlocks(data,x,y,z)
+            } else if (data.boolean == false) {
+                AddInspectedBlocks(data,x,y,z);
             }
         } else if (key == 'z') {
             let Tosendy = y - 1
@@ -352,6 +368,8 @@ async function init() {
                 y = --y
                 SetPos(turtle,x,y,z)
                 AddInspectedBlocks(data,x,y,z)
+            } else if (data.boolean == false) {
+                AddInspectedBlocks(data,x,y,z);
             }
         };
 
