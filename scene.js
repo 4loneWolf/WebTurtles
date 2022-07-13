@@ -4,7 +4,7 @@ import * as THREE from '/src/html/modules/three.module.js';
 import { GLTFLoader } from '/src/html/modules/GLTFLoader.js';
 import { OrbitControls } from '/src/html/modules/OrbitControls.js';
 import { GUI } from '/src/html/modules/dat.gui.module.js';
-import * as functions from '/src/functions/functions.js';
+import * as functions from '/src/functions/functionsForSite.js';
 let scene, camera, hlight, DataToSend, turtle, loader = new GLTFLoader(), Block = 1, NewBlock, removable_items = [], data;
 
 var req = new XMLHttpRequest();
@@ -16,11 +16,13 @@ console.log(header)
 var TurtleName = header
 
 async function init() {
-    let datochka = await sendData({message: "turtle direction and pos", name: TurtleName}, '/utility')
-    let direction = datochka.message, x = datochka.x, y = datochka.y, z = datochka.z;
+
+    let datochka = await sendData({message: "turtle pos, direction and blocks", name: TurtleName}, '/utility')
+    let direction = datochka.direction, x = datochka.x, y = datochka.y, z = datochka.z, BlocksArray = datochka.array;
 
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0x616164);
+    scene.frustrumCulled = false;
     
     camera = new THREE.PerspectiveCamera(90, window.innerWidth/window.innerHeight,0.01,999999);
     camera.position.set(x + -3, y + 3, z + 3);
@@ -30,11 +32,11 @@ async function init() {
     scene.add(hlight);
 
     const geometry = new THREE.BoxGeometry  ( 1, 1, 1 );
-    //const material = new THREE.MeshBasicMaterial( {
-        //color: 0x00ff00,
-        //opacity: 0.3,
-        //transparent: true
-    //});
+
+    for (var i in BlocksArray) {
+        const {BlockSiteX, BlockSiteY, BlockSiteZ, block, color} = BlocksArray[i]
+        AddBlockPos(BlockSiteX, BlockSiteY, BlockSiteZ, color)
+    }
 
     window.addEventListener('resize', () => {
         const { innerWidth, innerHeight } = window;
@@ -72,11 +74,14 @@ async function init() {
         animate(turtle);
     });
 
-    var MovementButton1 = { Forward: async function() { 
-        var data = await MakeArrayAndSend(x, y, z, "forward", direction)
-        if (data.boolean != false) {
-            var coords = functions.forward(direction, x, z);
+    var MovementButton1 = { Forward: async function() {
+        let coords = functions.forward(direction, x, z);
+                let xx = coords[0], zz = coords[1];
+        var data = await MakeArrayAndSend(xx, y, zz, "forward", direction)
+        if (data.boolean != false & data.boolean != undefined) {
+            coords = functions.forward(direction, x, z);
             x = coords[0], z = coords[1];
+            console.log(x, y, z)
             SetPos(turtle,x,y,z)
             AddInspectedBlocks(data,x,y,z)
         }
@@ -91,7 +96,7 @@ async function init() {
     var MovementButton2 = { Left: async function() {
         let Tempdirection = functions.left(direction);
         var data = await MakeArrayAndSend(x, y, z, "left", Tempdirection)
-        if (data.boolean != false) {
+        if (data.boolean != false & data.boolean != undefined) {
             direction = functions.left(direction);
             turtle.rotateZ(THREE.MathUtils.degToRad(-90));
             AddInspectedBlocks(data,x,y,z)
@@ -101,7 +106,7 @@ async function init() {
     var MovementButton3 = { Right: async function() {
         let Tempdirection = functions.right(direction);
         var data = await MakeArrayAndSend(x, y, z, "right", Tempdirection)
-        if (data.boolean != false) {
+        if (data.boolean != false & data.boolean != undefined) {
             direction = functions.right(direction);
             turtle.rotateZ(THREE.MathUtils.degToRad(90));
             AddInspectedBlocks(data,x,y,z)
@@ -118,7 +123,7 @@ async function init() {
     var MovementButton5 = { Up: async function() {
         let Tosendy = y + 1
             var data = await MakeArrayAndSend(x, Tosendy, z, "up")
-            if (data.boolean != false) {
+            if (data.boolean != false & data.boolean != undefined) {
                 y = ++y
                 SetPos(turtle,x,y,z)
                 AddInspectedBlocks(data,x,y,z)
@@ -128,7 +133,7 @@ async function init() {
     var MovementButton6 = { Down: async function() {
         let Tosendy = y - 1
             var data = await MakeArrayAndSend(x, Tosendy, z, "down")
-            if (data.boolean != false) {
+            if (data.boolean != false & data.boolean != undefined) {
                 y = --y
                 SetPos(turtle,x,y,z)
                 AddInspectedBlocks(data,x,y,z)
@@ -136,11 +141,13 @@ async function init() {
     }};
     
     var MovementButton7 = { Back: async function() {
-        var data = await MakeArrayAndSend(x, y, z, "back", direction)
-        console.log(data)
-        if (data.boolean != false) {
-            var coords = functions.back(direction, x, z);
+        let coords = functions.back(direction, x, z);
+                let xx = coords[0], zz = coords[1];
+        var data = await MakeArrayAndSend(xx, y, zz, "back", direction)
+        if (data.boolean != false & data.boolean != undefined) {
+            coords = functions.back(direction, x, z);
             x = coords[0], z = coords[1];
+            console.log(x, y, z)
             SetPos(turtle,x,y,z)
             AddInspectedBlocks(data,x,y,z)
         }
@@ -171,9 +178,9 @@ async function init() {
         //Turtles.add(RefreshTurtles, 'RefreshTurtles')
     //Turtles.open()
 
-    async function MakeArrayAndSend(x, y, z, dir, direction) {
+    async function MakeArrayAndSend(x, y, z, where, direction) {
         if (TurtleName != false) {
-            DataToSend = MakeAnArray(dir, x, y, z, TurtleName, direction)
+            DataToSend = MakeAnArray(where, x, y, z, TurtleName, direction)
             data = await sendData(DataToSend, '/pepe')
         } else {
             alert("Return to the turtles page and select one")
@@ -200,42 +207,82 @@ async function init() {
     };
 
     function addBlock(where, direction,x,y,z, color) {
-        console.log(color)
+        if (color == "Nocolor") {
+            if (where == "up") {
+                for (var i in scene.children) {
+                    if (scene.children[i].position.x == x & scene.children[i].position.y == y + 1 & scene.children[i].position.z == z) {
+                        scene.remove(scene.children[i])
+                        break;
+                    }
+                }
+            }
+            if (where == "middle") {
+                var coords = functions.forward(direction, x, z)
+                let nx = coords[0], nz = coords[1];
+                for (var i in scene.children) {
+                    if (scene.children[i].position.x == nx & scene.children[i].position.y == y & scene.children[i].position.z == nz) {
+                        scene.remove(scene.children[i])
+                        break;
+                    }
+                }
+            }
+            if (where == "down") {
+                for (var i in scene.children) {
+                    if (scene.children[i].position.x == x & scene.children[i].position.y == y - 1 & scene.children[i].position.z == z) {
+                        scene.remove(scene.children[i])
+                        break;
+                    }
+                }
+            }
+            
+        } else {
+            let material = new THREE.MeshBasicMaterial( {
+                color: parseInt(Number(color), 10),
+                opacity: 0.8,
+                transparent: true
+            });
+            let Block = new THREE.Mesh( geometry, material );
+            scene.add(Block);
+            if (where == "up") {
+                for (var i in scene.children) {
+                    if (scene.children[i].position.x == x & scene.children[i].position.y == y + 1 & scene.children[i].position.z == z) {
+                        scene.remove(scene.children[i])
+                        break;
+                    }
+                }
+                Block.position.set(x, y + 1, z);
+            } else if (where == "middle") {
+                var coords = functions.forward(direction, x, z)
+                let nx = coords[0], nz = coords[1];
+                for (var i in scene.children) {
+                    if (scene.children[i].position.x == nx & scene.children[i].position.y == y & scene.children[i].position.z == nz) {
+                        scene.remove(scene.children[i])
+                        break;
+                    }
+                }
+                Block.position.set(nx, y, nz)
+            } else {
+                for (var i in scene.children) {
+                    if (scene.children[i].position.x == x & scene.children[i].position.y == y - 1 & scene.children[i].position.z == z) {
+                        scene.remove(scene.children[i])
+                        break;
+                    }
+                }
+                Block.position.set(x, y - 1, z);
+            }
+        }
+    };
+
+    function AddBlockPos(x, y, z, color, blockname) {
         let material = new THREE.MeshBasicMaterial( {
             color: parseInt(Number(color), 10),
-            opacity: 0.5,
+            opacity: 0.8,
             transparent: true
         });
         let Block = new THREE.Mesh( geometry, material );
         scene.add(Block);
-        if (where == "up") {
-            for (var i in scene.children) {
-                if (scene.children[i].position.x == x & scene.children[i].position.y == y + 1 & scene.children[i].position.z == z) {
-                    scene.remove(scene.children[i])
-                    break;
-                }
-            }
-            Block.position.set(x, y + 1, z);
-        } else if (where == "middle") {
-            var coords = functions.forward(direction, x, z)
-            let nx = coords[0], nz = coords[1];
-            for (var i in scene.children) {
-                if (scene.children[i].position.x == nx & scene.children[i].position.y == y & scene.children[i].position.z == nz) {
-                    scene.remove(scene.children[i])
-                    break;
-                }
-            }
-            Block.position.set(nx, y, nz)
-        } else {
-            for (var i in scene.children) {
-                if (scene.children[i].position.x == x & scene.children[i].position.y == y - 1 & scene.children[i].position.z == z) {
-                    scene.remove(scene.children[i])
-                    break;
-                }
-            }
-            Block.position.set(x, y - 1, z);
-        }
-    };
+        Block.position.set(x, y, z)
+    }
 
     function AddInspectedBlocks(data,x,y,z) {
         let colorUp = "Nocolor", colorMiddle = "Nocolor", colorDown = "Nocolor"
@@ -250,13 +297,13 @@ async function init() {
         }
         console.log(colorUp, " ", colorMiddle, " ", colorDown)
         if (data != null) {
-            if (data.up != "Noblock") {
+            if (data.up) {
                 addBlock("up", direction,x,y,z, colorUp)
             }
-            if (data.down != "Noblock") {
+            if (data.down) {
                 addBlock("down", direction,x,y,z, colorDown)
             }
-            if (data.middle != "Noblock") {
+            if (data.middle) {
                 addBlock("middle", direction,x,y,z, colorMiddle)
             }
             console.log(data.up, " | ", data.middle, " | ", data.down)     
@@ -316,19 +363,20 @@ async function init() {
         const key = event.key.toLowerCase();
 
         if (key == 'w') {
-            var coords = functions.forward(direction, x, z);
+            let coords = functions.forward(direction, x, z);
                 let xx = coords[0], zz = coords[1];
             var data = await MakeArrayAndSend(xx, y, zz, "forward", direction)
-            if (data.boolean != false) {
-                var coords = functions.forward(direction, x, z);
+            if (data.boolean != false & data.boolean != undefined) {
+                coords = functions.forward(direction, x, z);
                 x = coords[0], z = coords[1];
+                console.log(x, y, z)
                 SetPos(turtle,x,y,z)
                 AddInspectedBlocks(data,x,y,z)
             }
         } else if (key == 'a') {;
             let Tempdirection = functions.left(direction);
             var data = await MakeArrayAndSend(x, y, z, "left", Tempdirection)
-            if (data.boolean != false) {
+            if (data.boolean != false & data.boolean != undefined) {
                 direction = functions.left(direction);
                 turtle.rotateZ(THREE.MathUtils.degToRad(-90));
                 AddInspectedBlocks(data,x,y,z)
@@ -336,25 +384,26 @@ async function init() {
         } else if (key == 'd') {;
             let Tempdirection = functions.left(direction);
             var data = await MakeArrayAndSend(x, y, z, "right", Tempdirection)
-            if (data.boolean != false) {
+            if (data.boolean != false & data.boolean != undefined) {
                 direction = functions.right(direction);
                 turtle.rotateZ(THREE.MathUtils.degToRad(90));
                 AddInspectedBlocks(data,x,y,z)
             }
         } else if (key == 's') {
-            var coords = functions.forward(direction, x, z);
+            let coords = functions.back(direction, x, z);
                 let xx = coords[0], zz = coords[1];
             var data = await MakeArrayAndSend(xx, y, zz, "back", direction)
-            if (data.boolean != false) {
-                var coords = functions.back(direction, x, z);
+            if (data.boolean != false & data.boolean != undefined) {
+                coords = functions.back(direction, x, z);
                 x = coords[0], z = coords[1];
+                console.log(x, y, z)
                 SetPos(turtle,x,y,z)
                 AddInspectedBlocks(data,x,y,z)
-                }
+        }
         } else if (key == 'q') {
             let Tosendy = y + 1
             var data = await MakeArrayAndSend(x, Tosendy, z, "up")
-            if (data.boolean != false) {
+            if (data.boolean != false & data.boolean != undefined) {
                 y = ++y
                 SetPos(turtle,x,y,z)
                 AddInspectedBlocks(data,x,y,z)
@@ -362,7 +411,7 @@ async function init() {
         } else if (key == 'z') {
             let Tosendy = y - 1
             var data = await MakeArrayAndSend(x, Tosendy, z, "down")
-            if (data.boolean != false) {
+            if (data.boolean != false & data.boolean != undefined) {
                 y = --y
                 SetPos(turtle,x,y,z)
                 AddInspectedBlocks(data,x,y,z)

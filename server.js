@@ -15,14 +15,16 @@ const options = {
 var server = https.createServer(options, app);
 //initialize the WebSocket server instance
 var wss = new WebSocket.Server({ server: server });
+var functions = require('./src/functions/functionsServer')
+var functionsSite = require('./src/functions/functionsForServerSite')
 var bodyParser = require('body-parser');
 var url = require('node:url')
 var favicon = require('serve-favicon')
 const { writeFile, writeFileSync } = require('node:fs');
 var jsonToLua = require("json_to_lua")
-const { format, parse } = require('lua-json')
+const { format, parse } = require('lua-json');
+const { isBreakStatement } = require("typescript");
 app.use(express.static(__dirname));
-app.use(favicon(path.join(__dirname, 'src', 'images', 'favicon.ico')))
 app.use(bodyParser.urlencoded({
     extended: false
 }));
@@ -40,6 +42,9 @@ async function sleep(milliseconds) {
     
 wss.on('connection', function (ws, req) {
 
+    ws.setMaxListeners(2)
+    app.setMaxListeners(3)
+
     ws.on('close', function () {
         for (i in CLIENTS) {
             if (CLIENTS[i].ws == ws) {
@@ -49,7 +54,7 @@ wss.on('connection', function (ws, req) {
     });
 
     const parameters = url.parse(req.url, true);
-    let BUSY, name = parameters.query.myName, TurtleX = +parameters.query.x, TurtleY = +parameters.query.y, TurtleZ = +parameters.query.z, TurtleDirection = parameters.query.direction
+    let name = parameters.query.myName, TurtleX = +parameters.query.x, TurtleY = +parameters.query.y, TurtleZ = +parameters.query.z, TurtleDirection = parameters.query.direction
     function AddClientToAnArray(names, wss, array) {
         let template = {
         name: names,
@@ -59,119 +64,26 @@ wss.on('connection', function (ws, req) {
         return array;
     }
 
-    async function forward(direction, newX, newZ) {
-        if (direction == 'north') {
-            newZ = --newZ;
-        }
-        else if (direction == 'south') {
-            newZ = ++newZ;
-        }
-        else if (direction == 'west') {
-            newX = --newX;
-        }
-        else if (direction == 'east') {
-            newX = ++newX;
-        }
-        else {
-            console.error('Not a direction');
-        }
-        return [newX, newZ];
-    }
-
-    async function back(direction, newX, newZ) {
-        if (direction == 'north') {
-            newZ = ++newZ
-        } else if (direction == 'south') {
-            newZ = --newZ
-        } else if (direction == 'west') {
-            newX = ++newX
-        } else if (direction == 'east') {
-            newX = --newX
-        } else {
-            console.error('Not a direction');
-        }
-        return [newX, newZ];
-    }
-
-    async function left(direction) {
-        var newDirection;
-        if (direction == 'north') {
-            newDirection = 'west';
-        }
-        else if (direction == 'west') {
-            newDirection = 'south';
-        }
-        else if (direction == 'south') {
-            newDirection = 'east';
-        }
-        else if (direction == 'east') {
-            newDirection = 'north';
-        }
-        else {
-            console.error('not a direction');
-        }
-        return newDirection;
-    }
-
-    async function right(direction) {
-        var newDirection;
-        if (direction == 'north') {
-            newDirection = 'east';
-        }
-        else if (direction == 'east') {
-            newDirection = 'south';
-        }
-        else if (direction == 'south') {
-            newDirection = 'west';
-        }
-        else if (direction == 'west') {
-            newDirection = 'north';
-        }
-        else {
-            console.error('not a direction');
-        }
-        return newDirection;
-    }
-
-    function encode(id) {
-        let Idlength = id.length
-        let result = ""
-        let newID = id
-        for (var i = Idlength; i > 0; i--) {
-            let newerId = newID.substring(0, 1);
-            console.log(newerId)
-            if (newerId == '0') {
-                result = result + "a"
-            } else if (newerId == '1') {
-                result = result + "b"
-            } else if (newerId == '2') {
-                result = result + "c"
-            } else if (newerId == '3') {
-                result = result + "d"
-            } else if (newerId == '4') {
-                result = result + "e"
-            } else if (newerId == '5') {
-                result = result + "f"
-            } else if (newerId == '6') {
-                result = result + "g"
-            } else if (newerId == '7') {
-                result = result + "h"
-            } else if (newerId == '8') {
-                result = result + "i"
-            } else if (newerId == '9') {
-                result = result + "j"
-            }
-            newID = newID.slice(0 + 1, newID.length);
-        }
-        console.log(result)
-        return result
-    }
-
     function TemplateForUnknownBlock(block, color) {
         let template = {
             block: block,
             color: color
         }
+        return template;
+    }
+
+    function TemplateForBlock(block, color, x, y, z, SiteX, SiteY, SiteZ) {
+        let template = {
+            block: block,
+            color: color,
+            x: x,
+            y: y,
+            z: z,
+            BlockSiteX: SiteX,
+            BlockSiteY: SiteY,
+            BlockSiteZ: SiteZ
+        }
+
         return template;
     }
 
@@ -253,14 +165,14 @@ wss.on('connection', function (ws, req) {
                 })
                 ws.send(NewName)
         }
-
     let code;
     app.post('/pepe', async function (req,res) {
         res.set('Cache-control', 'public, max-age=300');
         code = req.body.message;
         let JSONcode = JSON.parse(code);
             let SiteX = JSONcode.x, SiteY = JSONcode.y, SiteZ = JSONcode.z, whereToGo = JSONcode.dir, toWho = JSONcode.who, direction = JSONcode.direction;
-        let ws, TempName;
+        console.log(SiteX, SiteY, SiteZ)
+            let ws, TempName;
         console.log(direction);
         for (i in CLIENTS) {
             if (toWho == CLIENTS[i].name) {
@@ -279,11 +191,8 @@ wss.on('connection', function (ws, req) {
                 try {
                     let messageJSON = parse("return " + message)
                     if (messageJSON.ID == ID) {
-                        fs.readFile('./src/database/BlockColors.json', async function(err, data) {
+                        let data = fs.readFileSync('./src/database/BlockColors.json')
                             data = JSON.parse(data)
-                            if (err) {
-                                console.error(err)
-                            }
                             var letters = "0123456789ABCDEF";
                             let UpColor = false, FrontColor = false, DownColor = false;
                             for (var i in data.blocks) {
@@ -328,7 +237,6 @@ wss.on('connection', function (ws, req) {
                                 down: DownColor
                                 }
                             }
-                            messageJSON
                             data = JSON.stringify(data)
                             writeFile('./src/database/BlockColors.json', data, function(err) {
                                 if (err) throw err;
@@ -343,9 +251,8 @@ wss.on('connection', function (ws, req) {
                             if (messageJSON.down != "Noblock") {
                                 messageJSON.colorDown = array.data.down
                             }
-                            console.log(messageJSON)
+                            //console.log(messageJSON)
                             res.send(messageJSON)
-                        })
 
                         if (messageJSON.boolean == true) {
                             fs.readFile('./src/database/names.json', async function(err, data) {
@@ -356,33 +263,149 @@ wss.on('connection', function (ws, req) {
                                     for (i in data.data) {
                                         let broke = false;
                                         if (data.data[i].name == toWho) {
-                                            let x = data.data[i].TurtleCords.x, y = data.data[i].TurtleCords.y, z = data.data[i].TurtleCords.z, TurtleDirection = data.data[i].TurtleCords.direction
+                                            let TurtleX = data.data[i].TurtleCords.x, TurtleY = data.data[i].TurtleCords.y, TurtleZ = data.data[i].TurtleCords.z, TurtleDirection = data.data[i].TurtleCords.direction
                                             if (whereToGo == "forward") {
-                                                let NewCords = await forward(TurtleDirection, x, z)
+                                                let NewCords = functions.forward(TurtleDirection, TurtleX, TurtleZ)
                                                 let xx = NewCords[0], zz = NewCords[1]
                                                 data.data[i].TurtleCords.x = xx
                                                 data.data[i].TurtleCords.z = zz
+                                                data.data[i].TurtleCords.SiteX = SiteX
+                                                data.data[i].TurtleCords.SiteZ = SiteZ
                                             } else if (whereToGo == "back") {
-                                                let NewCords = await back(TurtleDirection, x, z)
+                                                let NewCords = functions.back(TurtleDirection, TurtleX, TurtleZ)
                                                 let xx = NewCords[0], zz = NewCords[1]
                                                 data.data[i].TurtleCords.x = xx
                                                 data.data[i].TurtleCords.z = zz
+                                                data.data[i].TurtleCords.SiteX = SiteX
+                                                data.data[i].TurtleCords.SiteZ = SiteZ
                                             } else if (whereToGo == "up") {
-                                                let yy = ++y
+                                                let yy = ++TurtleY
                                                 data.data[i].TurtleCords.y = yy
+                                                data.data[i].TurtleCords.SiteY = SiteY
                                             } else if (whereToGo == "down") {
-                                                let yy = --y
-                                                data.data[i].TurtleCords.y = yy                            
+                                                let yy = --TurtleY
+                                                data.data[i].TurtleCords.y = yy
+                                                data.data[i].TurtleCords.SiteY = SiteY                            
                                             } else if (whereToGo == "left") {
-                                                let NewTurtleDirection = await left(TurtleDirection)
+                                                let NewTurtleDirection = functions.left(TurtleDirection)
                                                 data.data[i].TurtleCords.direction = NewTurtleDirection
                                             } else if (whereToGo == "right") {
-                                                let NewTurtleDirection = await right(TurtleDirection)
+                                                let NewTurtleDirection = functions.right(TurtleDirection)
                                                 data.data[i].TurtleCords.direction = NewTurtleDirection
                                             }
-                                            data.data[i].TurtleCords.SiteX = SiteX
-                                            data.data[i].TurtleCords.SiteY = SiteY
-                                            data.data[i].TurtleCords.SiteZ = SiteZ
+                                            const {x, y, z, direction} = data.data[i].TurtleCords;
+                                            const {colorUp, colorMiddle, colorDown, up, middle, down} = messageJSON
+                                            if (up) {
+                                                let array, deleted = false, pushed = false;
+                                                if (colorUp == undefined) {
+                                                    for (var k in data.data[i].Blocks) {
+                                                        const {BlockSiteX, BlockSiteY, BlockSiteZ} = data.data[i].Blocks[k];
+                                                        if (BlockSiteX == SiteX & BlockSiteY == SiteY + 1 & BlockSiteZ == SiteZ) {
+                                                            data.data[i].Blocks.splice(k, 1)
+                                                            deleted = true
+                                                            break;
+                                                        }
+                                                    }
+                                                }
+                                                if (deleted == false) { 
+                                                    if (data.data[i].Blocks.length > 0) {
+                                                        for (var k in data.data[i].Blocks) {
+                                                            const {BlockSiteX, BlockSiteY, BlockSiteZ} = data.data[i].Blocks[k];
+                                                            if (BlockSiteX == SiteX & BlockSiteY == SiteY + 1 & BlockSiteZ == SiteZ) {
+                                                                data.data[i].Blocks.splice(k, 1)
+                                                                array = TemplateForBlock(up, colorUp, x, y + 1, z, SiteX, SiteY + 1, SiteZ)
+                                                                data.data[i].Blocks.push(array)
+                                                                pushed = true
+                                                                break;
+                                                            }
+                                                        }
+                                                        if (pushed == false & colorUp != undefined) {
+                                                            array = TemplateForBlock(up, colorUp, x, y + 1, z, SiteX, SiteY + 1, SiteZ)
+                                                            data.data[i].Blocks.push(array)
+                                                        }
+                                                    } else {
+                                                        array = TemplateForBlock(up, colorUp, x, y + 1, z, SiteX, SiteY + 1, SiteZ)
+                                                        data.data[i].Blocks.push(array)
+                                                    }
+                                                }
+                                            }
+                                            if (middle) {
+                                                let xx, zz, BlockX, BlockZ, BlockY = SiteY, array, pushed = false, deleted = false, color = colorMiddle;
+                                                let NewCords = functionsSite.forward(direction, SiteX, SiteZ)
+                                                xx = NewCords[0], zz = NewCords[1]
+                                                NewCords = functions.forward(direction, x, z)
+                                                BlockX = NewCords[0], BlockZ = NewCords[1];
+                                                if (colorMiddle == undefined) {
+                                                    for (var k in data.data[i].Blocks) {
+                                                        const {BlockSiteX, BlockSiteY, BlockSiteZ} = data.data[i].Blocks[k];
+                                                        if (BlockSiteX == xx & BlockSiteY == BlockY & BlockSiteZ == zz) {
+                                                            data.data[i].Blocks.splice(k, 1)
+                                                            deleted = true
+                                                            console.log("DELETED")
+                                                            break;
+                                                        }
+                                                    }
+                                                }
+                                                if (deleted == false) {
+                                                    if (data.data[i].Blocks.length > 0) {
+                                                        for (var k in data.data[i].Blocks) {
+                                                            const {BlockSiteX, BlockSiteY, BlockSiteZ} = data.data[i].Blocks[k];
+                                                            if (BlockSiteX == xx & BlockSiteY == BlockY & BlockSiteZ == zz) {
+                                                                data.data[i].Blocks.splice(k, 1)
+                                                                array = TemplateForBlock(middle, color, BlockX, y, BlockZ, xx, BlockY, zz)
+                                                                data.data[i].Blocks.push(array)
+                                                                pushed = true
+                                                                console.log("PUSHED")
+                                                                break;
+                                                            }
+                                                        }
+                                                        if (pushed == false & colorMiddle != undefined) {
+                                                            array = TemplateForBlock(middle, color, BlockX, y, BlockZ, xx, BlockY, zz)
+                                                            data.data[i].Blocks.push(array)
+
+                                                        }
+                                                    } else {
+                                                        array = TemplateForBlock(middle, color, BlockX, y, BlockZ, xx, BlockY, zz)
+                                                        data.data[i].Blocks.push(array)
+                                                        console.log("ELSE")
+                                                    }
+                                                }
+                                            }
+                                            if (down) {
+                                                let array, pushed = false, color = colorDown, deleted = false;
+                                                if (color == undefined) {
+                                                    for (var k in data.data[i].Blocks) {
+                                                        const {BlockSiteX, BlockSiteY, BlockSiteZ} = data.data[i].Blocks[k];
+                                                        if (BlockSiteX == SiteX & BlockSiteY == SiteY - 1 & BlockSiteZ == SiteZ) {
+                                                            data.data[i].Blocks.splice(k, 1)
+                                                            deleted = true
+                                                            break;
+                                                        }
+                                                    }
+                                                }
+                                                if (deleted == false) {
+                                                    if (data.data[i].Blocks.length > 0) {
+                                                        for (var k in data.data[i].Blocks) {
+                                                            const {BlockSiteX, BlockSiteY, BlockSiteZ} = data.data[i].Blocks[k];
+                                                            if (BlockSiteX == SiteX & BlockSiteY == SiteY - 1 & BlockSiteZ == SiteZ) {
+                                                                data.data[i].Blocks.splice(k, 1)
+                                                                array = TemplateForBlock(down, color, x, y - 1, z, SiteX, SiteY - 1, SiteZ)
+                                                                data.data[i].Blocks.push(array)
+                                                                pushed = true
+                                                                break;
+                                                            }
+                                                        }
+                                                        if (pushed == false & colorDown != undefined) {
+                                                            array = TemplateForBlock(down, color, x, y - 1, z, SiteX, SiteY - 1, SiteZ)
+                                                            data.data[i].Blocks.push(array)
+                                                        }
+                                                    } else {
+                                                        array = TemplateForBlock(down, color, x, y - 1, z, SiteX, SiteY - 1, SiteZ)
+                                                        data.data[i].Blocks.push(array)
+                                                    }
+                                                }
+                                            }
+                                            
                                             data = JSON.stringify(data)
                                             writeFile('./src/database/names.json', data, (err) => {
                                                 if (err) throw err;
@@ -395,10 +418,7 @@ wss.on('connection', function (ws, req) {
                                             break;
                                         }
                                     }
-                                };
-
-                            
-
+                                }
                             });
                         };
                         return messageJSON
@@ -450,23 +470,36 @@ wss.on('connection', function (ws, req) {
                     }
                     res.send(message)
                 }})
-        } else if (req.body.message.message == "turtle direction and pos") {
+        } else if (req.body.message.message == "turtle pos, direction and blocks") {
             fs.readFile('./src/database/names.json', (err, data) => {
                 data = JSON.parse(data)
                 if (err) {
                     console.log(err)
                 } else {
-                    for (i in data.data) {
+                    for (var i in data.data) {
                         if (req.body.message.name == data.data[i].name) {
-                            let direction = data.data[i].TurtleCords.direction
-                            console.log(direction)
-                            res.send({message: direction, x: data.data[i].TurtleCords.SiteX, y: data.data[i].TurtleCords.SiteY, z: data.data[i].TurtleCords.SiteZ})
+                            let direction = data.data[i].TurtleCords.direction, SiteX = 0, SiteY = 0, SiteZ = 0, array = data.data[i].Blocks;
+                            if (data.data[i].TurtleCords.SiteX != undefined) {
+                                SiteX = data.data[i].TurtleCords.SiteX, SiteY = data.data[i].TurtleCords.SiteY, SiteZ = data.data[i].TurtleCords.SiteZ
+                            }
+                            res.send({direction: direction, x: SiteX, y: SiteY, z: SiteZ, array:array})
                         }
                     }
                 }
             });
-        } else if (req.body.message.message == "turtle pos and blocks") {
+        } else if (req.body.message.message == "kekw") {
+            fs.readFile('/src/database/names.json', (err, data) => {
+                data = JSON.parse(data)
+                if (err) {
+                    console.log(err)
+                } else {
+                    for (var i in data.data) {
+                        if (data.data[i].name == req.body.message.name) {
 
+                        }
+                    }
+                }
+            })
         }
     });
 });
