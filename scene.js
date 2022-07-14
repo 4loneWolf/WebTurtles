@@ -17,8 +17,17 @@ var TurtleName = header
 
 async function init() {
 
-    let datochka = await sendData({message: "turtle pos, direction and blocks", name: TurtleName}, '/utility')
-    let direction = datochka.direction, x = datochka.x, y = datochka.y, z = datochka.z, BlocksArray = datochka.array;
+    //let a = document.getElementById('button1')
+    //let text = document.createTextNode('minecraftdirt')
+    //let buttons = document.getElementsByClassName('first')
+    //Array.from(buttons).forEach((button) => {
+        //button.innerHTML = "minecraftdiamond_pickaxe"
+    //})
+
+    let datochka = await sendData({message: "turtle pos, inventory, direction and blocks", name: TurtleName}, '/utility')
+    let direction = datochka.direction, x = datochka.x, y = datochka.y, z = datochka.z, BlocksArray = datochka.array, inventory = datochka.inventory, SelectedSlot = inventory[16];
+    UpdateInventory(inventory, false)
+    SetSelectedButton(inventory[16])
 
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0x616164);
@@ -153,6 +162,65 @@ async function init() {
         }
     }}
 
+    let DigUpButton = document.getElementById('digUp'), DigButton = document.getElementById('dig'), DigDownButton = document.getElementById('digDown');
+    DigUpButton.addEventListener('click', async () => {
+        var data = await MakeArrayAndSend(x, y, z, "digUp", direction)
+        if (data.boolean != false & data.boolean != undefined) {
+            AddInspectedBlocks(data,x,y,z)
+        }
+        UpdateInventory('', true)
+    })
+    DigButton.addEventListener('click', async () => {
+        var data = await MakeArrayAndSend(x, y, z, "dig", direction)
+        if (data.boolean != false & data.boolean != undefined) {
+            AddInspectedBlocks(data,x,y,z)
+        }
+        UpdateInventory('', true)
+    })
+    DigDownButton.addEventListener('click', async () => {
+        var data = await MakeArrayAndSend(x, y, z, "digDown", direction)
+        if (data.boolean != false & data.boolean != undefined) {
+            AddInspectedBlocks(data,x,y,z)
+        }
+        UpdateInventory('', true)
+    })
+
+    for (var i = 1; i < 17; ++i) {
+        let button = document.getElementById('button' + i)
+        button.addEventListener('click', async (kek) => {
+            if (kek.ctrlKey == false) {
+                await MakeArrayAndSend(x, y, z, "select" + kek.path[0].id.substring(6), 10, direction)
+                let id = parseInt(kek.path[0].id.substring(6), 10)
+                let button = document.getElementById('button' + SelectedSlot)
+                button.removeAttribute('onmouseover')
+                button.removeAttribute('onmouseleave')
+                button.removeAttribute('style')
+                SelectedSlot = id
+                SetSelectedButton(id)
+            } else {
+                let response = window.prompt("How many blocks to transfer?","");
+                if (response != false) {
+                    let broke = false
+                    if (isNaN(response) == true) {
+                        alert("АЛО НАХУЙ, ТЫ СЧИТАЕШЬ ЧТО" + " " + response + " " + "ЭТО БЛЯТЬ ЧИСЛО?")
+                        broke = true
+                    }
+                    if (broke == false) {
+                        if (response > 64) {
+                            response = 64
+                        } else if (response < 0) {
+                            response = 0
+                        }
+                        if (response != 0) {
+                            await sendData({message: "transfer", howMany: response, toSlot:kek.path[0].id.substring(6), name: TurtleName}, '/utility')
+                            UpdateInventory(datochka.inventory, false)
+                        }
+                    }
+                }
+            }
+        })
+    }
+
     //var RefreshTurtles = { RefreshTurtles: async function() {
         //let array;
         //let respond = await sendData("give me turtles", '/utility')
@@ -282,7 +350,7 @@ async function init() {
         let Block = new THREE.Mesh( geometry, material );
         scene.add(Block);
         Block.position.set(x, y, z)
-    }
+    };
 
     function AddInspectedBlocks(data,x,y,z) {
         let colorUp = "Nocolor", colorMiddle = "Nocolor", colorDown = "Nocolor"
@@ -309,6 +377,35 @@ async function init() {
             console.log(data.up, " | ", data.middle, " | ", data.down)     
         } else {
             console.log("message is empty")
+        }
+    };
+
+    function SetSelectedButton(number) {
+        let buttons = document.getElementById("button" + number)
+        buttons.style.backgroundColor = 'rgb(156, 156, 156)';
+        buttons.setAttribute("onmouseover", "over" + "(" + number + ")")
+        buttons.setAttribute("onmouseleave", "leave" + "(" + number + ")")
+    };
+
+    async function UpdateInventory(inventory, NeedToRequestInventory) {
+        if (NeedToRequestInventory == true) {
+            inventory = await sendData({message: "inventory", name: TurtleName}, '/utility')
+            inventory = inventory.inventory
+        }
+        for (i in inventory) {
+            if (inventory[i] != undefined & i != 16) {
+                let BlockName = inventory[i].name
+                let BlockCount = inventory[i].count
+                let b = parseInt(i, 10) + 1
+                let buttons = document.getElementById("button" + b)
+                buttons.innerHTML = BlockName + " x" + BlockCount 
+            } else if (inventory[i] == undefined) {
+                let b = parseInt(i, 10) + 1
+                let button = document.getElementById('button' + b)
+                if (button.innerHTML != undefined) {  
+                    button.innerHTML = ""
+                }
+            }
         }
     }
 
