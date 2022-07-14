@@ -19,11 +19,9 @@ var functions = require('./src/functions/functionsServer')
 var functionsSite = require('./src/functions/functionsForServerSite')
 var bodyParser = require('body-parser');
 var url = require('node:url')
-var favicon = require('serve-favicon')
 const { writeFile, writeFileSync } = require('node:fs');
 var jsonToLua = require("json_to_lua")
 const { format, parse } = require('lua-json');
-const { isBreakStatement } = require("typescript");
 app.use(express.static(__dirname));
 app.use(bodyParser.urlencoded({
     extended: false
@@ -470,7 +468,7 @@ wss.on('connection', function (ws, req) {
                     }
                     res.send(message)
                 }})
-        } else if (req.body.message.message == "turtle pos, direction and blocks") {
+        } else if (req.body.message.message == "turtle pos, inventory, direction and blocks") {
             fs.readFile('./src/database/names.json', (err, data) => {
                 data = JSON.parse(data)
                 if (err) {
@@ -479,26 +477,87 @@ wss.on('connection', function (ws, req) {
                     for (var i in data.data) {
                         if (req.body.message.name == data.data[i].name) {
                             let direction = data.data[i].TurtleCords.direction, SiteX = 0, SiteY = 0, SiteZ = 0, array = data.data[i].Blocks;
-                            if (data.data[i].TurtleCords.SiteX != undefined) {
-                                SiteX = data.data[i].TurtleCords.SiteX, SiteY = data.data[i].TurtleCords.SiteY, SiteZ = data.data[i].TurtleCords.SiteZ
+                            for (i in CLIENTS) {
+                                if (req.body.message.name == CLIENTS[i].name) {
+                                    ws = CLIENTS[i].ws
+                                };
                             }
-                            res.send({direction: direction, x: SiteX, y: SiteY, z: SiteZ, array:array})
+                            let codeToSend = {whereToGo: "inventory"}, messageJSON, TempArray = [];
+                            codeToSend = jsonToLua.jsonToLua(JSON.stringify(codeToSend));
+                            ws.send(codeToSend);
+                            ws.once('message', (message) => {
+                                messageJSON = parse("return " + message);
+                                TempArray.push(messageJSON.Firstblock)
+                                TempArray.push(messageJSON.Secondblock)
+                                TempArray.push(messageJSON.Thirdblock)
+                                TempArray.push(messageJSON.Fourthblock)
+                                TempArray.push(messageJSON.Fifthblock)
+                                TempArray.push(messageJSON.Sixthblock)
+                                TempArray.push(messageJSON.Seventhblock)
+                                TempArray.push(messageJSON.Eigthblock)
+                                TempArray.push(messageJSON.Ninethblock)
+                                TempArray.push(messageJSON.Tenthblock)
+                                TempArray.push(messageJSON.Eleventhblock)
+                                TempArray.push(messageJSON.Twelfthblock)
+                                TempArray.push(messageJSON.Thirteenthblock)
+                                TempArray.push(messageJSON.Fourteenfthblock)
+                                TempArray.push(messageJSON.Fifteenthblock)
+                                TempArray.push(messageJSON.Sixteenthblock)
+                                TempArray.push(messageJSON.selectedSlot)
+                                if (data.data[i].TurtleCords.SiteX != undefined) {
+                                    SiteX = data.data[i].TurtleCords.SiteX, SiteY = data.data[i].TurtleCords.SiteY, SiteZ = data.data[i].TurtleCords.SiteZ
+                                }
+                                res.send({direction: direction, x: SiteX, y: SiteY, z: SiteZ, array:array, inventory: TempArray})
+                            })
                         }
                     }
                 }
             });
-        } else if (req.body.message.message == "kekw") {
-            fs.readFile('/src/database/names.json', (err, data) => {
-                data = JSON.parse(data)
-                if (err) {
-                    console.log(err)
+        } else if (req.body.message.message == "inventory") {
+            for (i in CLIENTS) {
+                if (req.body.message.name == CLIENTS[i].name) {
+                    ws = CLIENTS[i].ws
+                };
+            }
+            ws.send(jsonToLua.jsonToLua(JSON.stringify({message:req.body.message.message})));
+            ws.once('message', (message) => {
+                let TempArray = [];
+                let messageJSON = parse("return " + message);
+                TempArray.push(messageJSON.Firstblock)
+                TempArray.push(messageJSON.Secondblock)
+                TempArray.push(messageJSON.Thirdblock)
+                TempArray.push(messageJSON.Fourthblock)
+                TempArray.push(messageJSON.Fifthblock)
+                TempArray.push(messageJSON.Sixthblock)
+                TempArray.push(messageJSON.Seventhblock)
+                TempArray.push(messageJSON.Eigthblock)
+                TempArray.push(messageJSON.Ninethblock)
+                TempArray.push(messageJSON.Tenthblock)
+                TempArray.push(messageJSON.Eleventhblock)
+                TempArray.push(messageJSON.Twelfthblock)
+                TempArray.push(messageJSON.Thirteenthblock)
+                TempArray.push(messageJSON.Fourteenfthblock)
+                TempArray.push(messageJSON.Fifteenthblock)
+                TempArray.push(messageJSON.Sixteenthblock)
+                TempArray.push(messageJSON.selectedSlot)
+                res.send({inventory: TempArray})
+            })
+        } else if (req.body.message.message == "transfer") {
+            let howMany = req.body.message.howMany, toSlot = req.body.message.toSlot;
+            for (i in CLIENTS) {
+                if (req.body.message.name == CLIENTS[i].name) {
+                    ws = CLIENTS[i].ws
                 } else {
-                    for (var i in data.data) {
-                        if (data.data[i].name == req.body.message.name) {
+                    console.error(" NO SUCH TURTLE |||| ERROR ON LINE: 562")
+                };
+            }
+            let codeToSend = {message: "transfer", howMany: howMany, toSlot: toSlot}
+            codeToSend = jsonToLua.jsonToLua(JSON.stringify(codeToSend));
 
-                        }
-                    }
-                }
+            ws.send(codeToSend);
+            ws.once('message', (message) => {
+                let messageJSON = parse("return " + message);
+                res.send(messageJSON.boolean)
             })
         }
     });

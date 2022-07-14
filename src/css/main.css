@@ -1,0 +1,117 @@
+.first {
+    width: 90px;
+    height: 60px;
+    white-space: normal;
+    word-wrap: break-word;
+    font-family: monospace;
+    font-size: 15px;
+    border-radius: 3px;
+    background-color: rgb(197, 197, 197);
+    color: black;
+    cursor: pointer;
+    position:absolute;
+}
+.first:hover {
+    background-color:rgb(134, 134, 134);
+}
+
+.digging {
+    width: 70px;
+    height: 45px;
+    white-space: normal;
+    word-wrap: break-word;
+    font-family: monospace;
+    font-size: 15px;
+    border-radius: 3px;
+    background-color: rgb(109, 101, 101);
+    color: black;
+    cursor: pointer;
+    position:absolute;
+    left:50%;
+}
+.digging:hover {
+    background-color: rgb(138, 131, 131);
+}
+#dig::before {
+    content:url(/src/images/pickaxe30x30.png)
+}
+#digUp::before {
+    content:url(/src/images/arrow-up.png);
+}
+#digDown::before {
+    content:url(/src/images/down-arrow.png)
+}
+#digUp {
+    top: 0.3cm;
+}
+#dig {
+    top: 1.51cm;
+}
+#digDown {
+    top: 2.74cm;
+}
+
+#button1 {
+    top: 0.3cm;
+    left: 0.3cm;
+}
+#button2 {
+    top: 0.3cm;
+    left: 2.7cm;
+}
+#button3 {
+    top: 0.3cm;
+    left: 5.1cm;
+}
+#button4 {
+    top: 0.3cm;
+    left: 7.5cm;
+}
+#button5 {
+    top: 1.9cm;
+    left: 0.3cm;
+}
+#button6 {
+    top: 1.9cm;
+    left: 2.7cm;
+}
+#button7 {
+    top: 1.9cm;
+    left: 5.1cm;
+}
+#button8 {
+    top: 1.9cm;
+    left: 7.5cm;
+}
+#button9 {
+    top: 3.5cm;
+    left: 0.3cm;
+}
+#button10 {
+    top: 3.5cm;
+    left: 2.7cm;
+}
+#button11 {
+    top: 3.5cm;
+    left: 5.1cm;
+}
+#button12 {
+    top: 3.5cm;
+    left: 7.5cm;
+}
+#button13 {
+    top: 5.1cm;
+    left: 0.3cm;
+}
+#button14 {
+    top: 5.1cm;
+    left: 2.7cm;
+}
+#button15 {
+    top: 5.1cm;
+    left: 5.1cm;
+}
+#button16 {
+    top: 5.1cm;
+    left: 7.5cm;
+}
