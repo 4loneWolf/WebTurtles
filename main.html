@@ -4,11 +4,48 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
 <meta http-equiv="Pragma" content="no-cache" />
 <meta http-equiv="Expires" content="0" />
-<head>
-    <meta charset="UTF-8">
-    <title>Main</title>
-</head>
+    <head>
+        <meta charset="UTF-8">
+        <title>Main</title>
+        <link rel="stylesheet" href="/src/css/main.css">
+    </head>
+    
     <body id="WASD">
-        <script type="module" src="/scene.js">init();</script> 
+        <script> 
+            function over(number) {
+                document.getElementById("button" + number).style.backgroundColor = "rgb(134, 134, 134)"
+            }
+            function leave(number) {
+                document.getElementById("button" + number).style.backgroundColor = "rgb(156, 156, 156)"
+            }
+        </script>
+
+        <button class="first" id="button1"></button>
+        <button class="first" id="button2"></button>
+        <button class="first" id="button3"></button>
+        <button class="first" id="button4"></button>
+        <button class="first" id="button5"></button>
+        <button class="first" id="button6"></button>
+        <button class="first" id="button7"></button>
+        <button class="first" id="button8"></button>
+        <button class="first" id="button9"></button>
+        <button class="first" id="button10"></button>
+        <button class="first" id="button11"></button>
+        <button class="first" id="button12"></button>
+        <button class="first" id="button13"></button>
+        <button class="first" id="button14"></button>
+        <button class="first" id="button15"></button>
+        <button class="first" id="button16"></button>
+        <button class="dropping" id="dropUp"></button>
+        <button class="dropping" id="drop"></button>
+        <button class="dropping" id="dropDown"></button>
+        <button class="digging" id="dig"></button>
+        <button class="digging" id="digUp"></button>
+        <button class="digging" id="digDown"></button>
+        <button class="placing" id="placeUp"></button>
+        <button class="placing" id="place"></button>
+        <button class="placing" id="placeDown"></button>
+
+        <script type="module" src="/scene.js">init();</script>
     </body>
 </html>
