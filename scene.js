@@ -5,6 +5,9 @@ import { GLTFLoader } from '/src/html/modules/GLTFLoader.js';
 import { OrbitControls } from '/src/html/modules/OrbitControls.js';
 import { GUI } from '/src/html/modules/dat.gui.module.js';
 import * as functions from '/src/functions/functionsForSite.js';
+import {CSS2DRenderer , CSS2DObject} from './src/html/modules/CSS2DRenderer.js'
+import { Interaction } from './src/html/modules/three.interaction.module.js'
+//import * as THREEx from '/src/html/modules/threex.domevents.js'
 let scene, camera, hlight, DataToSend, turtle, loader = new GLTFLoader(), Block = 1, NewBlock, removable_items = [], data;
 
 var req = new XMLHttpRequest();
@@ -42,15 +45,11 @@ async function init() {
 
     const geometry = new THREE.BoxGeometry  ( 1, 1, 1 );
 
-    for (var i in BlocksArray) {
-        const {BlockSiteX, BlockSiteY, BlockSiteZ, block, color} = BlocksArray[i]
-        AddBlockPos(BlockSiteX, BlockSiteY, BlockSiteZ, color)
-    }
-
     window.addEventListener('resize', () => {
         const { innerWidth, innerHeight } = window;
 
         renderer.setSize(innerWidth, innerHeight);
+        labelRenderer.setSize(innerWidth, innerHeight)
         camera.aspect = innerWidth / innerHeight;
         camera.updateProjectionMatrix();
     });
@@ -59,12 +58,28 @@ async function init() {
     renderer.setSize(window.innerWidth,window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
-    const controls = new OrbitControls( camera, renderer.domElement );
+    const labelRenderer = new CSS2DRenderer();
+    labelRenderer.setSize(window.innerWidth, window.innerHeight);
+    labelRenderer.domElement.style.position = 'absolute';
+    labelRenderer.domElement.style.top = 0;
+    document.body.appendChild(labelRenderer.domElement)
+
+
+    const interaction = new Interaction(labelRenderer, scene, camera);
+
+    for (var i in BlocksArray) {
+        const {BlockSiteX, BlockSiteY, BlockSiteZ, block, color} = BlocksArray[i]
+        AddBlockPos(BlockSiteX, BlockSiteY, BlockSiteZ, color, block)
+    }
+
+    const controls = new OrbitControls( camera, labelRenderer.domElement );
     controls.update();
     
     function animate() {
         requestAnimationFrame( animate );
         controls.update();
+        camera.updateProjectionMatrix();
+        labelRenderer.render( scene, camera )
         renderer.render( scene, camera );
     };
 
@@ -162,7 +177,7 @@ async function init() {
         }
     }}
 
-    let DigUpButton = document.getElementById('digUp'), DigButton = document.getElementById('dig'), DigDownButton = document.getElementById('digDown');
+    let DigUpButton = document.getElementById('digUp'), DigButton = document.getElementById('dig'), DigDownButton = document.getElementById('digDown'), DropUp = document.getElementById('dropUp'), Drop = document.getElementById('drop'), DropDown = document.getElementById('dropDown'), PlaceUp = document.getElementById('placeUp'), Place = document.getElementById('place'), PlaceDown = document.getElementById('placeDown');
     DigUpButton.addEventListener('click', async () => {
         var data = await MakeArrayAndSend(x, y, z, "digUp", direction)
         if (data.boolean != false & data.boolean != undefined) {
@@ -184,6 +199,87 @@ async function init() {
         }
         UpdateInventory('', true)
     })
+    DropUp.addEventListener('click', async () => {
+        let response = window.prompt("How many blocks to drop?","From 1 to 64")
+        if (response != undefined) {
+            if (isNaN(response) == true) {
+                alert("АЛО НАХУЙ, ТЫ СЧИТАЕШЬ ЧТО" + " " + response + " " + "ЭТО БЛЯТЬ ЧИСЛО?")
+                broke = true
+            } else {
+                if (response > 64) {
+                    response = 64
+                } else if (response < 0) {
+                    response = 0
+                }
+                var data = await sendData({message: "dropUp", count: response}, '/utility')
+                if (data.boolean != false & data.boolean != undefined) {
+                    AddInspectedBlocks(data,x,y,z)
+                }
+                UpdateInventory('', true)
+            }
+        }
+    })
+    Drop.addEventListener('click', async () => {
+        let response = window.prompt("How many blocks to drop?","From 1 to 64")
+        if (response != undefined) {
+            if (isNaN(response) == true) {
+                alert("АЛО НАХУЙ, ТЫ СЧИТАЕШЬ ЧТО" + " " + response + " " + "ЭТО БЛЯТЬ ЧИСЛО?")
+                broke = true
+            } else {
+                if (response > 64) {
+                    response = 64
+                } else if (response < 0) {
+                    response = 0
+                }
+                var data = await sendData({message: "drop", count: response}, '/utility')
+                if (data.boolean != false & data.boolean != undefined) {
+                    AddInspectedBlocks(data,x,y,z)
+                }
+                UpdateInventory('', true)
+            }
+        }
+    })
+    DropDown.addEventListener('click', async () => {
+        let response = window.prompt("How many blocks to drop?","From 1 to 64")
+        if (response != undefined) {
+            if (isNaN(response) == true) {
+                alert("АЛО НАХУЙ, ТЫ СЧИТАЕШЬ ЧТО" + " " + response + " " + "ЭТО БЛЯТЬ ЧИСЛО?")
+                broke = true
+            } else {
+                if (response > 64) {
+                    response = 64
+                } else if (response < 0) {
+                    response = 0
+                }
+                var data = await sendData({message: "dropDown", count: response}, '/utility')
+                if (data.boolean != false & data.boolean != undefined) {
+                    AddInspectedBlocks(data,x,y,z)
+                }
+                UpdateInventory('', true)
+            }
+        }
+    })
+    PlaceUp.addEventListener('click', async () => {
+        var data = await MakeArrayAndSend(x, y, z, "placeUp", direction)
+        if (data.boolean != false & data.boolean != undefined) {
+            AddInspectedBlocks(data,x,y,z)
+        }
+        UpdateInventory('', true)
+    })
+    Place.addEventListener('click', async () => {
+        var data = await MakeArrayAndSend(x, y, z, "place", direction)
+        if (data.boolean != false & data.boolean != undefined) {
+            AddInspectedBlocks(data,x,y,z)
+        }
+        UpdateInventory('', true)
+    })
+    PlaceDown.addEventListener('click', async () => {
+        var data = await MakeArrayAndSend(x, y, z, "placeDown", direction)
+        if (data.boolean != false & data.boolean != undefined) {
+            AddInspectedBlocks(data,x,y,z)
+        }
+        UpdateInventory('', true)
+    })
 
     for (var i = 1; i < 17; ++i) {
         let button = document.getElementById('button' + i)
@@ -198,8 +294,8 @@ async function init() {
                 SelectedSlot = id
                 SetSelectedButton(id)
             } else {
-                let response = window.prompt("How many blocks to transfer?","");
-                if (response != false) {
+                let response = window.prompt("How many blocks to transfer?","From 1 to 64");
+                if (response != undefined) {
                     let broke = false
                     if (isNaN(response) == true) {
                         alert("АЛО НАХУЙ, ТЫ СЧИТАЕШЬ ЧТО" + " " + response + " " + "ЭТО БЛЯТЬ ЧИСЛО?")
@@ -213,7 +309,7 @@ async function init() {
                         }
                         if (response != 0) {
                             await sendData({message: "transfer", howMany: response, toSlot:kek.path[0].id.substring(6), name: TurtleName}, '/utility')
-                            UpdateInventory(datochka.inventory, false)
+                            UpdateInventory(datochka.inventory, true)
                         }
                     }
                 }
@@ -341,6 +437,7 @@ async function init() {
         }
     };
 
+    let blockLabel;
     function AddBlockPos(x, y, z, color, blockname) {
         let material = new THREE.MeshBasicMaterial( {
             color: parseInt(Number(color), 10),
@@ -349,6 +446,21 @@ async function init() {
         });
         let Block = new THREE.Mesh( geometry, material );
         scene.add(Block);
+        Block.on('mousedown', function (ev) {
+            if (ev.data.originalEvent.shiftKey == true) {
+                let blockDiv = document.createElement( 'div' );
+                blockDiv.className = 'label'
+                blockDiv.id = "aboba"
+                blockDiv.innerText = blockname;
+                blockLabel = new CSS2DObject(blockDiv);
+                blockLabel.position.set(x/1000, y/1000, z/1000)
+                Block.add(blockLabel)
+            }
+        })
+        Block.on('mouseout', function (ev) {
+            let toDelete = document.getElementById('aboba')
+            Block.remove(Block.children[0])
+        })
         Block.position.set(x, y, z)
     };
 
@@ -407,7 +519,7 @@ async function init() {
                 }
             }
         }
-    }
+    };
 
     function clean() {
         if( removable_items.length > 0 ) {

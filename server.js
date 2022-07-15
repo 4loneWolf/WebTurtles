@@ -540,6 +540,7 @@ wss.on('connection', function (ws, req) {
                 TempArray.push(messageJSON.Fifteenthblock)
                 TempArray.push(messageJSON.Sixteenthblock)
                 TempArray.push(messageJSON.selectedSlot)
+                console.log(TempArray)
                 res.send({inventory: TempArray})
             })
         } else if (req.body.message.message == "transfer") {
@@ -559,6 +560,22 @@ wss.on('connection', function (ws, req) {
                 let messageJSON = parse("return " + message);
                 res.send(messageJSON.boolean)
             })
+        } else if (req.body.message.message.substring(0,4) == "drop"){
+            for (i in CLIENTS) {
+                if (req.body.message.name == CLIENTS[i].name) {
+                    ws = CLIENTS[i].ws
+                } else {
+                    console.error(" NO SUCH TURTLE |||| ERROR ON LINE: 562")
+                };
+                req.body.message.message
+                let codeToSend = {message: req.body.message.message, howMany: req.body.message.count}
+                codeToSend = jsonToLua.jsonToLua(JSON.stringify(codeToSend));
+                ws.send(codeToSend);
+                ws.once('message', (message) => {
+                    let messageJSON = parse("return " + message);
+                    res.send(messageJSON.boolean)
+                })
+            }
         }
     });
 });
