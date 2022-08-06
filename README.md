@@ -8,7 +8,7 @@
 5. Make block color customization page with an HTML hex code color picker
 6. ~Rework whole visuals in 3d CSS~
 7. Add prewritten functions for turtles.
-8. Add digging.
+8. ~Add digging.~
 9. ~Add inventory.~
 10. Refueling
 11. ?Mitosis?
