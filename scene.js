@@ -14,11 +14,13 @@ var req = new XMLHttpRequest();
 req.open('GET', document.location, false);
 req.send(null);
 var header = req.responseURL
-header = header.substring(41)
+header = header.substring(38)
 console.log(header)
 var TurtleName = header
 
 async function init() {
+
+    let ID;
 
     //let a = document.getElementById('button1')
     //let text = document.createTextNode('minecraftdirt')
@@ -54,7 +56,7 @@ async function init() {
         camera.updateProjectionMatrix();
     });
 
-    const renderer = new THREE.WebGLRenderer();
+    const renderer = new THREE.WebGLRenderer({ antialiasing: true });
     renderer.setSize(window.innerWidth,window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
@@ -178,7 +180,9 @@ async function init() {
     }}
 
     let DigUpButton = document.getElementById('digUp'), DigButton = document.getElementById('dig'), DigDownButton = document.getElementById('digDown'), DropUp = document.getElementById('dropUp'), Drop = document.getElementById('drop'), DropDown = document.getElementById('dropDown'), PlaceUp = document.getElementById('placeUp'), Place = document.getElementById('place'), PlaceDown = document.getElementById('placeDown');
+    let SuckUp = document.getElementById('suckUp'), Suck = document.getElementById('suck'), SuckDown = document.getElementById('suckDown')
     DigUpButton.addEventListener('click', async () => {
+        ID = idGenerator()
         var data = await MakeArrayAndSend(x, y, z, "digUp", direction)
         if (data.boolean != false & data.boolean != undefined) {
             AddInspectedBlocks(data,x,y,z)
@@ -203,7 +207,7 @@ async function init() {
         let response = window.prompt("How many blocks to drop?","From 1 to 64")
         if (response != undefined) {
             if (isNaN(response) == true) {
-                alert("АЛО НАХУЙ, ТЫ СЧИТАЕШЬ ЧТО" + " " + response + " " + "ЭТО БЛЯТЬ ЧИСЛО?")
+                alert("АЛО, ТЫ СЧИТАЕШЬ ЧТО" + " " + response + " " + "ЭТО БЛЯТЬ ЧИСЛО?")
                 broke = true
             } else {
                 if (response > 64) {
@@ -211,9 +215,8 @@ async function init() {
                 } else if (response < 0) {
                     response = 0
                 }
-                var data = await sendData({message: "dropUp", count: response}, '/utility')
+                var data = await sendData({message: "dropUp", count: response, name: TurtleName}, '/utility')
                 if (data.boolean != false & data.boolean != undefined) {
-                    AddInspectedBlocks(data,x,y,z)
                 }
                 UpdateInventory('', true)
             }
@@ -223,7 +226,7 @@ async function init() {
         let response = window.prompt("How many blocks to drop?","From 1 to 64")
         if (response != undefined) {
             if (isNaN(response) == true) {
-                alert("АЛО НАХУЙ, ТЫ СЧИТАЕШЬ ЧТО" + " " + response + " " + "ЭТО БЛЯТЬ ЧИСЛО?")
+                alert("АЛО, ТЫ СЧИТАЕШЬ ЧТО" + " " + response + " " + "ЭТО БЛЯТЬ ЧИСЛО?")
                 broke = true
             } else {
                 if (response > 64) {
@@ -231,9 +234,8 @@ async function init() {
                 } else if (response < 0) {
                     response = 0
                 }
-                var data = await sendData({message: "drop", count: response}, '/utility')
+                var data = await sendData({message: "drop", count: response, name: TurtleName}, '/utility')
                 if (data.boolean != false & data.boolean != undefined) {
-                    AddInspectedBlocks(data,x,y,z)
                 }
                 UpdateInventory('', true)
             }
@@ -243,7 +245,7 @@ async function init() {
         let response = window.prompt("How many blocks to drop?","From 1 to 64")
         if (response != undefined) {
             if (isNaN(response) == true) {
-                alert("АЛО НАХУЙ, ТЫ СЧИТАЕШЬ ЧТО" + " " + response + " " + "ЭТО БЛЯТЬ ЧИСЛО?")
+                alert("АЛО, ТЫ СЧИТАЕШЬ ЧТО" + " " + response + " " + "ЭТО БЛЯТЬ ЧИСЛО?")
                 broke = true
             } else {
                 if (response > 64) {
@@ -251,10 +253,7 @@ async function init() {
                 } else if (response < 0) {
                     response = 0
                 }
-                var data = await sendData({message: "dropDown", count: response}, '/utility')
-                if (data.boolean != false & data.boolean != undefined) {
-                    AddInspectedBlocks(data,x,y,z)
-                }
+                await sendData({message: "dropDown", count: response, name: TurtleName}, '/utility')
                 UpdateInventory('', true)
             }
         }
@@ -280,12 +279,64 @@ async function init() {
         }
         UpdateInventory('', true)
     })
+    SuckUp.addEventListener('click', async () => {
+        let response = window.prompt("How many blocks to suck?","From 1 to 64")
+        if (response != undefined) {
+            if (isNaN(response) == true) {
+                alert("АЛО, ТЫ СЧИТАЕШЬ ЧТО" + " " + response + " " + "ЭТО БЛЯТЬ ЧИСЛО?")
+                broke = true
+            } else {
+                if (response > 64) {
+                    response = 64
+                } else if (response < 0) {
+                    response = 0
+                }
+                await sendData({message: "suckUp", count: response}, '/utility')
+                UpdateInventory('', true)
+            }
+        }
+    })
+    Suck.addEventListener('click', async () => {
+        let response = window.prompt("How many blocks to suck?","From 1 to 64")
+        if (response != undefined) {
+            if (isNaN(response) == true) {
+                alert("АЛО, ТЫ СЧИТАЕШЬ ЧТО" + " " + response + " " + "ЭТО БЛЯТЬ ЧИСЛО?")
+                broke = true
+            } else {
+                if (response > 64) {
+                    response = 64
+                } else if (response < 0) {
+                    response = 0
+                }
+                await sendData({message: "suck", count: response}, '/utility')
+                UpdateInventory('', true)
+            }
+        }
+    })
+    SuckDown.addEventListener('click', async () => {
+        let response = window.prompt("How many blocks to suck?","From 1 to 64")
+        if (response != undefined) {
+            if (isNaN(response) == true) {
+                alert("АЛО, ТЫ СЧИТАЕШЬ ЧТО" + " " + response + " " + "ЭТО ЧИСЛО?")
+                broke = true
+            } else {
+                if (response > 64) {
+                    response = 64
+                } else if (response < 0) {
+                    response = 0
+                }
+                await sendData({message: "suckDown", count: response}, '/utility')
+                UpdateInventory('', true)
+            }
+        }
+    })
+
 
     for (var i = 1; i < 17; ++i) {
         let button = document.getElementById('button' + i)
         button.addEventListener('click', async (kek) => {
             if (kek.ctrlKey == false) {
-                await MakeArrayAndSend(x, y, z, "select" + kek.path[0].id.substring(6), 10, direction)
+                await MakeArrayAndSend(x, y, z, "select" + kek.path[0].id.substring(6), direction)
                 let id = parseInt(kek.path[0].id.substring(6), 10)
                 let button = document.getElementById('button' + SelectedSlot)
                 button.removeAttribute('onmouseover')
@@ -298,7 +349,7 @@ async function init() {
                 if (response != undefined) {
                     let broke = false
                     if (isNaN(response) == true) {
-                        alert("АЛО НАХУЙ, ТЫ СЧИТАЕШЬ ЧТО" + " " + response + " " + "ЭТО БЛЯТЬ ЧИСЛО?")
+                        alert("АЛО, ТЫ СЧИТАЕШЬ ЧТО" + " " + response + " " + "ЭТО БЛЯТЬ ЧИСЛО?")
                         broke = true
                     }
                     if (broke == false) {
@@ -317,16 +368,6 @@ async function init() {
         })
     }
 
-    //var RefreshTurtles = { RefreshTurtles: async function() {
-        //let array;
-        //let respond = await sendData("give me turtles", '/utility')
-        //for (var i in respond) {
-            //let name = respond[i]
-            //array = Names(name, i)
-            //Turtles.add(array[i], name)
-        //}
-    //}}
-
     const gui = new GUI();
     const Movement = gui.addFolder('Movement');
         Movement.add(MovementButton1,'Forward');
@@ -337,10 +378,6 @@ async function init() {
         Movement.add(MovementButton6, "Down")
         Movement.add(MovementButton7, "Back")
     Movement.open();
-
-    //const Turtles = Gui.addFolder('Turtles')
-        //Turtles.add(RefreshTurtles, 'RefreshTurtles')
-    //Turtles.open()
 
     async function MakeArrayAndSend(x, y, z, where, direction) {
         if (TurtleName != false) {
@@ -370,7 +407,7 @@ async function init() {
         return DataToSend;
     };
 
-    function addBlock(where, direction,x,y,z, color) {
+    function addBlock(where, direction,x,y,z, color, blockname) {
         if (color == "Nocolor") {
             if (where == "up") {
                 for (var i in scene.children) {
@@ -400,13 +437,33 @@ async function init() {
             }
             
         } else {
-            let material = new THREE.MeshBasicMaterial( {
-                color: parseInt(Number(color), 10),
-                opacity: 0.8,
-                transparent: true
-            });
+            let material;
+            console.log(blockname)
+            if (blockname == "minecraftwater") {
+                material = new THREE.MeshBasicMaterial( {
+                    color: parseInt(Number(color), 10),
+                    opacity: 0.2,
+                    transparent: true
+                });
+            } else {
+                material = new THREE.MeshBasicMaterial( {
+                    color: parseInt(Number(color), 10),
+                    opacity: 0.8,
+                    transparent: true
+                });
+            }
             let Block = new THREE.Mesh( geometry, material );
             scene.add(Block);
+            var outlineMaterial;
+            if (blockname == "minecraftwater") {
+                outlineMaterial = new THREE.MeshBasicMaterial( { color: 0x000000, side: THREE.BackSide, transparent: true, opacity: 0.1 } );
+            } else {
+                outlineMaterial = new THREE.MeshBasicMaterial( { color: 0x000000, side: THREE.BackSide, transparent: true, opacity: 0.5 } );
+            }
+            let outlineMesh = new THREE.Mesh( geometry, outlineMaterial );
+            outlineMesh.scale.multiplyScalar( 1.05 );
+            Block.add( outlineMesh );
+            let blockLabels = [];
             if (where == "up") {
                 for (var i in scene.children) {
                     if (scene.children[i].position.x == x & scene.children[i].position.y == y + 1 & scene.children[i].position.z == z) {
@@ -414,6 +471,23 @@ async function init() {
                         break;
                     }
                 }
+                Block.on('mousedown', function (ev) {
+                    if (ev.data.originalEvent.shiftKey == true) {
+                        let blockDiv = document.createElement( 'div' );
+                        blockDiv.className = 'label'
+                        blockDiv.id = "aboba"
+                        blockDiv.innerText = blockname;
+                        blockLabel = new CSS2DObject(blockDiv);
+                        blockLabel.position.set(x/1000, y/1000, z/1000)
+                        Block.add(blockLabel)
+                        blockLabels.push(Block)
+                    }
+                })
+                Block.on('mouseout', function (ev) {
+                    blockLabels.forEach((Block) => {
+                        Block.remove(Block.children[1])
+                    })
+                })
                 Block.position.set(x, y + 1, z);
             } else if (where == "middle") {
                 var coords = functions.forward(direction, x, z)
@@ -424,6 +498,23 @@ async function init() {
                         break;
                     }
                 }
+                Block.on('mousedown', function (ev) {
+                    if (ev.data.originalEvent.shiftKey == true) {
+                        let blockDiv = document.createElement( 'div' );
+                        blockDiv.className = 'label'
+                        blockDiv.id = "aboba"
+                        blockDiv.innerText = blockname;
+                        blockLabel = new CSS2DObject(blockDiv);
+                        blockLabel.position.set(x/1000, y/1000, z/1000)
+                        Block.add(blockLabel)
+                        blockLabels.push(Block)
+                    }
+                })
+                Block.on('mouseout', function (ev) {
+                    blockLabels.forEach((Block) => {
+                        Block.remove(Block.children[1])
+                    })
+                })
                 Block.position.set(nx, y, nz)
             } else {
                 for (var i in scene.children) {
@@ -432,18 +523,44 @@ async function init() {
                         break;
                     }
                 }
+                Block.on('mousedown', function (ev) {
+                    if (ev.data.originalEvent.shiftKey == true) {
+                        let blockDiv = document.createElement( 'div' );
+                        blockDiv.className = 'label'
+                        blockDiv.id = "aboba"
+                        blockDiv.innerText = blockname;
+                        blockLabel = new CSS2DObject(blockDiv);
+                        blockLabel.position.set(x/1000, y/1000, z/1000)
+                        Block.add(blockLabel)
+                        blockLabels.push(Block)
+                    }
+                })
+                Block.on('mouseout', function (ev) {
+                    blockLabels.forEach((Block) => {
+                        Block.remove(Block.children[1])
+                    })
+                })
                 Block.position.set(x, y - 1, z);
             }
         }
     };
 
-    let blockLabel;
+    let blockLabel, blockLabels = [];
     function AddBlockPos(x, y, z, color, blockname) {
-        let material = new THREE.MeshBasicMaterial( {
-            color: parseInt(Number(color), 10),
-            opacity: 0.8,
-            transparent: true
-        });
+        let outlineMaterial, material;
+        if (blockname == "minecraftwater") {
+            material = new THREE.MeshBasicMaterial( {
+                color: parseInt(Number(color), 10),
+                opacity: 0.2,
+                transparent: true
+            });
+        } else {
+            material = new THREE.MeshBasicMaterial( {
+                color: parseInt(Number(color), 10),
+                opacity: 0.8,
+                transparent: true
+            });
+        }
         let Block = new THREE.Mesh( geometry, material );
         scene.add(Block);
         Block.on('mousedown', function (ev) {
@@ -455,17 +572,28 @@ async function init() {
                 blockLabel = new CSS2DObject(blockDiv);
                 blockLabel.position.set(x/1000, y/1000, z/1000)
                 Block.add(blockLabel)
+                blockLabels.push(Block)
             }
         })
         Block.on('mouseout', function (ev) {
-            let toDelete = document.getElementById('aboba')
-            Block.remove(Block.children[0])
+            blockLabels.forEach((Block) => {
+                Block.remove(Block.children[1])
+            })
         })
+        if (blockname == "minecraftwater") {
+            outlineMaterial = new THREE.MeshBasicMaterial( { color: 0x000000, side: THREE.BackSide, transparent: true, opacity: 0.1 } );
+        } else {
+            outlineMaterial = new THREE.MeshBasicMaterial( { color: 0x000000, side: THREE.BackSide, transparent: true, opacity: 0.5 } );
+        }
+        let outlineMesh = new THREE.Mesh( geometry, outlineMaterial );
+        outlineMesh.scale.multiplyScalar( 1.05 );
+        Block.add( outlineMesh );
         Block.position.set(x, y, z)
     };
 
     function AddInspectedBlocks(data,x,y,z) {
         let colorUp = "Nocolor", colorMiddle = "Nocolor", colorDown = "Nocolor"
+        console.log(data.colorUp, data.colorMiddle, data.colorDown)
         if (data.colorUp != undefined) {
             colorUp = data.colorUp
         }
@@ -478,19 +606,23 @@ async function init() {
         console.log(colorUp, " ", colorMiddle, " ", colorDown)
         if (data != null) {
             if (data.up) {
-                addBlock("up", direction,x,y,z, colorUp)
+                addBlock("up", direction,x,y,z, colorUp, data.up)
             }
             if (data.down) {
-                addBlock("down", direction,x,y,z, colorDown)
+                addBlock("down", direction,x,y,z, colorDown, data.down)
             }
             if (data.middle) {
-                addBlock("middle", direction,x,y,z, colorMiddle)
+                addBlock("middle", direction,x,y,z, colorMiddle, data.middle)
             }
             console.log(data.up, " | ", data.middle, " | ", data.down)     
         } else {
             console.log("message is empty")
         }
     };
+
+    function idGenerator(){
+        return Date.now().toString(36) + Math.random().toString(36).substring(2);
+    }
 
     function SetSelectedButton(number) {
         let buttons = document.getElementById("button" + number)
@@ -627,6 +759,27 @@ async function init() {
             }
         };
 
+    });
+
+    if (document.readyState == 'complete') {
+        fetch('/UserConnected', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({message: "Someone connected to " + TurtleName})
+        });
+        console.log("aboba");
+    };
+
+    window.addEventListener('beforeunload', () => {
+        fetch('/UserDisconnected', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({message: "Someone disconnected from " + TurtleName})
+        })
     });
 };
 

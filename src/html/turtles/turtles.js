@@ -24,25 +24,30 @@ async function sendData(data, where, options = {}) {
 };
 
 var data = await sendData({message:"give me turtles"}, '/utility');
-var req = new XMLHttpRequest();
-req.open('GET', document.location, false);
-req.send(null);
-var header = 'https://abobys.website:80/main.html'
+console.log(data)
+if (data[0] != undefined) {
+  var req = new XMLHttpRequest();
+  req.open('GET', document.location, false);
+  req.send(null);
+  var header = 'https://abobys.website/main.html'
 
-//header = header.substring(0, 40) + "/main.html"
-//console.log(header)
-var parent = document.getElementById('body')
+  //header = header.substring(0, 40) + "/main.html"
+  //console.log(header)
+  var parent = document.getElementById('body')
 
-for (var i in data) {
-  var TurtleName = data[i].name
-  let x = data[i].coords.x, y = data[i].coords.y, z = data[i].coords.z
-  let NewHeader = header + "?name=" + TurtleName
-  console.log(NewHeader)
-  
-  let a = parent.appendChild(document.createElement('a'))
-  var link = document.createTextNode(TurtleName + " (" + x + ", " + y + ", " + z + ")");
-  a.appendChild(link)
-  a.href = NewHeader
-  a.style = "font-size: 35px;"
-  parent.appendChild(document.createElement('br'))
+  for (var i in data) {
+    var TurtleName = data[i].name
+    let x = data[i].coords.x, y = data[i].coords.y, z = data[i].coords.z
+    let NewHeader = header + "?name=" + TurtleName
+    console.log(NewHeader)
+    
+    let a = parent.appendChild(document.createElement('a'))
+    var link = document.createTextNode(TurtleName + " (" + x + ", " + y + ", " + z + ")");
+    a.appendChild(link)
+    a.href = NewHeader
+    a.style = "font-size: 35px;"
+    parent.appendChild(document.createElement('br'))
+  }
+} else {
+  alert("No turtles connected, try refreshing the page later(>_<)")
 }

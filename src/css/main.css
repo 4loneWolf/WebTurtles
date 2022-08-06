@@ -5,7 +5,7 @@
     word-wrap: break-word;
     font-family: monospace;
     z-index: 2000;
-    font-size: 15px;
+    font-size: 12px;
     border-radius: 3px;
     background-color: rgb(197, 197, 197);
     color: black;
@@ -14,6 +14,43 @@
 }
 .first:hover {
     background-color:rgb(134, 134, 134);
+}
+
+.sucking {
+    z-index: 2000;
+    width: 70px;
+    height: 45px;
+    white-space: normal;
+    word-wrap: break-word;
+    font-family: monospace;
+    font-size: 15px;
+    border-radius: 3px;
+    background-color: rgb(109, 101, 101);
+    color: black;
+    cursor: pointer;
+    position: absolute;
+    top: 9.3cm;
+}
+.sucking:hover {
+    background-color: rgb(138, 131, 131);
+}
+#suckUp {
+    left: 2cm;
+}
+#suck {
+    left: 3.9cm;
+}
+#suckDown {
+    left: 5.8cm;
+}
+#suckUp::before {
+    content: url(/src/images/arrow-up.png);
+}
+#suck::before {
+    content: url(/src/images/picking.png);
+}
+#suckDown::before {
+    content: url(/src/images/down-arrow.png)
 }
 
 .dropping {
