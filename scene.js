@@ -207,7 +207,7 @@ async function init() {
         let response = window.prompt("How many blocks to drop?","From 1 to 64")
         if (response != undefined) {
             if (isNaN(response) == true) {
-                alert("АЛО, ТЫ СЧИТАЕШЬ ЧТО" + " " + response + " " + "ЭТО БЛЯТЬ ЧИСЛО?")
+                alert("АЛО, ТЫ СЧИТАЕШЬ ЧТО" + " " + response + " " + "ЭТО ЧИСЛО?")
                 broke = true
             } else {
                 if (response > 64) {
@@ -226,7 +226,7 @@ async function init() {
         let response = window.prompt("How many blocks to drop?","From 1 to 64")
         if (response != undefined) {
             if (isNaN(response) == true) {
-                alert("АЛО, ТЫ СЧИТАЕШЬ ЧТО" + " " + response + " " + "ЭТО БЛЯТЬ ЧИСЛО?")
+                alert("АЛО, ТЫ СЧИТАЕШЬ ЧТО" + " " + response + " " + "ЭТО ЧИСЛО?")
                 broke = true
             } else {
                 if (response > 64) {
@@ -245,7 +245,7 @@ async function init() {
         let response = window.prompt("How many blocks to drop?","From 1 to 64")
         if (response != undefined) {
             if (isNaN(response) == true) {
-                alert("АЛО, ТЫ СЧИТАЕШЬ ЧТО" + " " + response + " " + "ЭТО БЛЯТЬ ЧИСЛО?")
+                alert("АЛО, ТЫ СЧИТАЕШЬ ЧТО" + " " + response + " " + "ЭТО ЧИСЛО?")
                 broke = true
             } else {
                 if (response > 64) {
@@ -283,7 +283,7 @@ async function init() {
         let response = window.prompt("How many blocks to suck?","From 1 to 64")
         if (response != undefined) {
             if (isNaN(response) == true) {
-                alert("АЛО, ТЫ СЧИТАЕШЬ ЧТО" + " " + response + " " + "ЭТО БЛЯТЬ ЧИСЛО?")
+                alert("АЛО, ТЫ СЧИТАЕШЬ ЧТО" + " " + response + " " + "ЭТО ЧИСЛО?")
                 broke = true
             } else {
                 if (response > 64) {
@@ -300,7 +300,7 @@ async function init() {
         let response = window.prompt("How many blocks to suck?","From 1 to 64")
         if (response != undefined) {
             if (isNaN(response) == true) {
-                alert("АЛО, ТЫ СЧИТАЕШЬ ЧТО" + " " + response + " " + "ЭТО БЛЯТЬ ЧИСЛО?")
+                alert("АЛО, ТЫ СЧИТАЕШЬ ЧТО" + " " + response + " " + "ЭТО ЧИСЛО?")
                 broke = true
             } else {
                 if (response > 64) {
@@ -349,7 +349,7 @@ async function init() {
                 if (response != undefined) {
                     let broke = false
                     if (isNaN(response) == true) {
-                        alert("АЛО, ТЫ СЧИТАЕШЬ ЧТО" + " " + response + " " + "ЭТО БЛЯТЬ ЧИСЛО?")
+                        alert("АЛО, ТЫ СЧИТАЕШЬ ЧТО" + " " + response + " " + "ЭТО ЧИСЛО?")
                         broke = true
                     }
                     if (broke == false) {
